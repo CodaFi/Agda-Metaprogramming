@@ -37,7 +37,7 @@ infix 3 _⊢_
 ⟦ σ ▹ τ ⟧⋆ = ⟦ σ ⟧⋆ → ⟦ τ ⟧⋆
 
 ⟦_⟧Cx : Cx ⋆ → (⋆ → Set) → Set
-⟦ ε ⟧Cx V = V ι
+⟦ ε ⟧Cx V = One
 ⟦ (Γ , σ) ⟧Cx V = ⟦ Γ ⟧Cx V × V σ
 
 ⟦_⟧∈ : ∀ {Γ τ V} → τ ∈ Γ → ⟦ Γ ⟧Cx V → V τ
@@ -262,14 +262,12 @@ renVal ι r (tt , ())
 renVal (σ ▹ τ) r (tt , f) = tt , (λ r' s -> f (r' ∘ r) s)
 
 renVals : ∀ Θ {Γ Δ} → Ren Γ Δ → ⟦ Θ ⟧Cx (Val Γ) → ⟦ Θ ⟧Cx (Val Δ)
-renVals ε r _ = ff , {!!} 
+renVals ε r _ = <>
 renVals (Θ , σ) r (θ , τ) = (renVals Θ r θ) , renVal σ r τ
--- renVals ε r _ = <>
 
 idEnv : ∀ Γ → ⟦ Γ ⟧Cx (Val Γ)
-idEnv ε = ff , {!!}
+idEnv ε = <>
 idEnv (Γ , σ) = renVals Γ suc (idEnv Γ) , (ff , var zero)
--- idEnv ε = <>
 
 mutual
   apply : ∀ {Γ σ τ} → Val Γ (σ ▹ τ) → Val Γ σ → Val Γ τ
