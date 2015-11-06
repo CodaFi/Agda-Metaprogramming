@@ -24,6 +24,7 @@ data _⊢_ (Γ : Cx ⋆) : ⋆ → Set where
       → Γ ⊢ τ
   lam : ∀ {σ τ}
       → Γ , σ ⊢ τ
+      ------------
       → Γ ⊢ σ ▹ τ
   app : ∀ {σ τ}
       → Γ ⊢ σ ▹ τ → Γ ⊢ σ
@@ -162,17 +163,10 @@ _-_ : ∀ (Γ : Cx ⋆) {τ} (x : τ ∈ Γ) → Cx ⋆
 (Γ , sg) - suc x = (Γ - x) , sg
 infixl 4 _-_
 
--- (Γ , y) - y₁ |    refl = Γ
-
 _≠_ : ∀ {Γ σ} (x : σ ∈ Γ) → Ren (Γ - x) Γ
 zero ≠ y = suc y
 suc x ≠ zero = zero
 suc x ≠ suc y = suc (x ≠ y)
-{-
-zero   ≠ y      = suc y
-suc x  ≠ zero   = zero
-suc x  ≠ suc y  = suc (x ≠ y)
--}
 
 {-
 ⟨_↦_⟩_ : ∀ {Γ σ τ} → (x : σ ∈ Γ) → Γ -x x ⊨ σ → Γ ⊨ τ → Γ -x x ⊨ τ
@@ -263,19 +257,19 @@ mutual
   Go Γ (σ ▹ τ) = ∀ {Δ} → Ren Γ Δ → Val Δ σ → Val Δ τ
 
 renVal : ∀ {Γ Δ} τ → Ren Γ Δ → Val Γ τ → Val Δ τ
-renVal ι r (tt , ())
 renVal τ r (ff , u) = ff , renSt r u
+renVal ι r (tt , ())
 renVal (σ ▹ τ) r (tt , f) = tt , (λ r' s -> f (r' ∘ r) s)
 
 renVals : ∀ Θ {Γ Δ} → Ren Γ Δ → ⟦ Θ ⟧Cx (Val Γ) → ⟦ Θ ⟧Cx (Val Δ)
-renVals = {!!}
+renVals ε r _ = ff , {!!} 
+renVals (Θ , σ) r (θ , τ) = (renVals Θ r θ) , renVal σ r τ
 -- renVals ε r _ = <>
--- renVals (Θ , σ) r (θ , s) = (renVals Θ r θ) , (renVal σ r s)
 
 idEnv : ∀ Γ → ⟦ Γ ⟧Cx (Val Γ)
-idEnv = {!!}
+idEnv ε = ff , {!!}
+idEnv (Γ , σ) = renVals Γ suc (idEnv Γ) , (ff , var zero)
 -- idEnv ε = <>
--- idEnv (Γ , σ) = renVals _ suc (idEnv Γ) , (ff , var _∈_.zero)
 
 mutual
   apply : ∀ {Γ σ τ} → Val Γ (σ ▹ τ) → Val Γ σ → Val Γ τ
@@ -289,7 +283,7 @@ mutual
   
 eval : ∀ {Γ Δ τ} → Γ ⊢ τ → ⟦ Γ ⟧Cx (Val Δ) → Val Δ τ
 eval (var x) γ = ⟦ x ⟧∈ γ
-eval (lam t) γ = tt , λ r s → eval t (renVals _ r γ , s)
+eval {Γ}{_}{_} (lam t) γ = tt , λ r s → eval t (renVals Γ r γ , s)
 eval (app f s) γ = apply (eval f γ) (eval s γ)
 
 normByEval : ∀ {Γ τ} -> Γ ⊢ τ → Γ ⊨ τ
