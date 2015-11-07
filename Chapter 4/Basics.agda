@@ -116,3 +116,7 @@ zip : {S T : Set} → List S → List T → List (S × T)
 zip ⟨⟩ ⟨⟩ = ⟨⟩
 zip (x , xs) (y , ys) = (x , y) , zip xs ys
 zip _ _ = ⟨⟩
+
+data _⁻¹_ { S T : Set }(f : S → T) : T → Set where
+  from : (s : S) → f ⁻¹ f s
+  
