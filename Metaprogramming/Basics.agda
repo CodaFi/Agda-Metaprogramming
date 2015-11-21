@@ -2,7 +2,6 @@ module Basics where
 
 open import Level using (Level) renaming (zero to lzero; suc to lsuc)
 
-
 _∘_ : forall {i j k}
         {A : Set i}{B : A -> Set j}{C : (a : A) -> B a -> Set k} ->
         (f : {a : A}(b : B a) -> C a b) ->
@@ -18,7 +17,6 @@ data ℕ : Set where
   suc   : ℕ → ℕ
 
 {-# BUILTIN NATURAL ℕ #-}
-
 
 _+_ : ℕ → ℕ → ℕ
 zero + y = y
@@ -74,7 +72,6 @@ _ =[ refl ⟩ q = q
 _⟨_]=_ : forall {l}{X : Set l}(x : X){y z} → y ≃ x → y ≃ z → x ≃ z
 _ ⟨ refl ]= q = q
 
-
 _∎ : forall {l}{X : Set l}(x : X) → x ≃ x
 x ∎ = refl
 
@@ -116,3 +113,7 @@ zip : {S T : Set} → List S → List T → List (S × T)
 zip ⟨⟩ ⟨⟩ = ⟨⟩
 zip (x , xs) (y , ys) = (x , y) , zip xs ys
 zip _ _ = ⟨⟩
+
+data _⁻¹_ { S T : Set }(f : S → T) : T → Set where
+  from : (s : S) → f ⁻¹ f s
+  
