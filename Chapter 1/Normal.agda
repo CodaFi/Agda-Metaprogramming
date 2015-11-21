@@ -2,6 +2,7 @@ module Normal where
 
 open import Basics
 open import Function using (const)
+open import Level renaming (suc to lsuc; zero to lzero)
 
 open import Vector
 open import Applicative
@@ -55,7 +56,7 @@ nPair : ∀ { X }(F G : Normal) →  ⟦ F ⟧ℕ X × ⟦ G ⟧ℕ X → ⟦ F 
 nPair F G ((ShFx , fs) , (ShGx , gs)) = (ShFx , ShGx) , fs ++ gs
 
 concatSurjectivity : forall {m n : ℕ} {X} -> (x : Vec X (m + n)) -> (vv \ (u : Vec X m) (v : Vec X n) -> u ++ v)  ^-1 x
-concatSurjectivity {zero} v = from (? , v)
+concatSurjectivity {zero} v = from ({!!} , v)
 concatSurjectivity {suc m} (x , v) with concatSurjectivity {m} v
 concatSurjectivity {suc m} (x , .(u ++ w)) | from (u , w) = from ((x , u) , w)
 
@@ -156,51 +157,50 @@ fstHom = record
   ; resp• = λ _ _ → refl
   }
 
-Batch : Set -> Set -> Set
-Batch X Y = Sg ℕ \ n -> Vec X n -> Y
+Batch : Set → Set → Set
+Batch X Y = Sg ℕ λ n → Vec X n → Y
 
-ABatch : {X : Set} -> Applicative  (Batch X)
-ABatch {X} =
-  record {
-    pure = λ y → 0 , (λ x → y);
-    _⍟_ = app
+split : forall {X} m {n} -> Vec X (m + n) -> Vec X m × Vec X n
+split zero xs = ⟨⟩ , xs
+split (suc m) (x , xs) with split m xs
+split (suc m) (x , xs) | ys , zs = (x , ys) , zs
+
+batchApplicative : {X : Set} → Applicative (Batch X)
+batchApplicative {X} = record
+  { pure = λ y → (0 , λ _ → y)
+  ; _⍟_ = app
   } where
-    app : {S T : Set} -> Batch X (S -> T) -> Batch X S -> Batch X T
-    app (n , vs) (m , us) = (n + m) , (λ ws → splitAndApply ws) where
-      splitAndApply : (ws : Vec _ (n + m)) -> _
-      splitAndApply ws with concatSurjectivity {n} ws
-      splitAndApply .(vi ++ ui) | from (vi , ui) = (vs vi) (us ui)
+    app : {S T : Set} → Batch X (S → T) → Batch X S → Batch X T
+    app (n , f) (m , g) = (n + m) , (λ xs → let ss = split n xs in f (fst ss) (g (snd ss)))
 
-unpack : ∀ {X} -> Vec X 1 -> X
-unpack (x , _) = x
-
-batcher : forall {F} {{TF : Traversable F}} -> F One -> forall {X} -> Batch X (F X)
-batcher {F} {{TF}} sF {X} = traverse {F} {{TF}} {Batch X} {{ABatch}} (λ _ → 1 , unpack) sF 
-
-open import Level
+batcher : ∀ {F} {{TF : Traversable F}} → F One → ∀ {X} → Batch X (F X)
+batcher {F} {{TF}} sF {X} = traverse {F} {{TF}} {Batch X} {{batchApplicative}} (λ _ → 1 , λ { (x , _) → x }) sF 
 
 coherence : ∀ {F} {{TF : Traversable F}} {X} -> TraversableOKP F 
             → (sF : F One) →
                fst (batcher {F} {{TF}} sF {X}) ≃
-               traverse {F} {{TF}} {λ _ → ℕ} {One} {One} {{monoidApplicative}} (λ _ → 1) sF
-coherence {F} {{TF}} {X} tokF u = 
+               traverse {F} {{TF}} {λ _ → ℕ} {One} {One} {{monoidApplicative {{sumMonoid}}}} (λ _ → 1) sF
+coherence {F} {{TF}} {X} tokF u = {!!}
+
+{-
    fst (traverse TF (λ _ → 1 , unpack) u) 
-     ⟨ TraversableOKP.lawPHom {F} {TF} tokF {Batch X} {{ABatch}} {λ _ → ℕ} {{monoidApplicative}} fst (λ _ → 1 , unpack) 
+     ⟨ TraversableOKP.lawPHom {F} {TF} tokF {Batch X} {{ABatch}} {λ _ → ℕ} {{monoidApplicative {{sumMonoid}}}} fst (λ _ → 1 , unpack) 
         (record { respPure = λ {X₁} x → refl
                 ; respApp  = λ f s → refl
                 }) u ]= 
-   (traverse TF {λ _ → ℕ} {One {Level.zero}} {X}
+   (traverse TF {λ _ → ℕ} {One {lzero}} {X}
      {{record { pure = λ {_} _ → 0; _<*>_ = λ {_} {_} → _+_ }}}
      (λ a → 1) u)
      =[ TraversableOKP.lawPCo {F} {TF} tokF 
                               {G = id} {{AG = applicativeId}} 
                               {H = λ _ → ℕ} {{AH = monoidApplicative}} 
                               (λ _ → <>) (λ _ → 1) u ⟩
-   (traverse TF {λ _ → ℕ} {One {Level.zero}} {One}
+   (traverse TF {λ _ → ℕ} {One {lzero}} {One}
      {{record { pure = λ {_} _ → 0; _<*>_ = λ {_} {_} → _+_ }}}
      (λ a → 1) u)
      ∎
-     
+-}
+
 fromNormal :  ∀ {F}{{TF : Traversable F}} -> TraversableOKP F ->
               ∀ {X} -> ⟦ normalT F ⟧ℕ X -> F X
 fromNormal {F} {{TF}} tokf {X} (sF , cF) with (coherence {F} {{TF}} {X} tokf sF) 
