@@ -57,13 +57,13 @@ homSum {F}{G}{{AF}}{{AG}} f = record {
   pure = λ x → tt , (pure {{AF}} x)
   ; _⍟_ = app
   } where
-    app : {S T : Set} → Sg Two (F (S → T) ⟨?⟩ G (S → T)) → Sg Two (F S ⟨?⟩ G S) → Sg Two (F T ⟨?⟩ G T)
+    app : {S T : Set} → Σ Two (F (S → T) ⟨?⟩ G (S → T)) → Σ Two (F S ⟨?⟩ G S) → Σ Two (F T ⟨?⟩ G T)
     app (tt , k) (tt , g) = tt , (k ⍟ g)
     app (tt , k) (ff , g) = ff , (f k ⍟ g)
     app (ff , k) (tt , g) = ff , (k ⍟ (f g))
     app (ff , k) (ff , g) = ff , (k ⍟ g)
 
-{-
+
 homSumOKP : ∀ {F G}{{AF : Applicative F}}{{AG : Applicative G}} → ApplicativeOKP F → ApplicativeOKP G → (f : F -:> G) -> AppHom f → ApplicativeOKP _ {{homSum f}}
 homSumOKP {F}{G}{{AF}}{{AG}} FOK GOK f homf = record
   { lawId = lawIdLemma
@@ -112,4 +112,4 @@ homSumOKP {F}{G}{{AF}}{{AG}} FOK GOK f homf = record
     lawCoLemma (ff , g) (tt , h) (ff , r) = {!!}
     lawCoLemma (ff , g) (ff , h) (tt , r) = {!!}
     lawCoLemma (ff , g) (ff , h) (ff , r) = {!!}
--}
+
