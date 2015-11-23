@@ -239,7 +239,7 @@ data DS (I J : Set₁) : Set₁ where
   , (λ { (hx , t) → snd (⟦ T (xi ∘ hx) ⟧DS (X , xi)) t })
 
 idDS : { I : Set₁ } → DS I I
-idDS = {!!}
+idDS = δ One λ f → ι (f <>)
 
 {-
 mutual
@@ -278,8 +278,10 @@ pairDS (ι x) U <> u = u
 pairDS (σ S T) U (s , t) u = s , pairDS (T s) U t u
 pairDS (δ H T) U {_ , d} (f , t) u = f , (pairDS (T (d ∘ f)) U t u)
 
+{-
 coDS : ∀ {I J K} → DS J K → DS I J → DS I K
 coDS E D = {!!}
+-}
 
 mutual
   data Irish (I : Set₁) : Set₁ where
@@ -309,8 +311,11 @@ Node (σ S T) X = ΣF (Node S X) λ iS → Node (T iS) X
 IF : Set₁ → Set₁ → Set₁
 IF I J = Σ (Irish I) λ T → Info T → J
 
+_$F_ : ∀ {I J} → (I → J) → Fam I → Fam J
+f $F (F , i) = F , (f ∘ i)
+
 ⟦_⟧IF : ∀ {I J} → IF I J → Fam I → Fam J
-⟦ (T , d) ⟧IF X = {!d!} , {!Node T X!}
+⟦ (T , d) ⟧IF X = d $F Node T X
 
 {-
 mutual
