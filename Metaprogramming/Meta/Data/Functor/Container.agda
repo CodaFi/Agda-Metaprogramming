@@ -1,7 +1,7 @@
-module Data.Functor.Container where
+module Meta.Data.Functor.Container where
 
-open import Basics
-open import Data.EndoFunctor
+open import Meta.Basics
+open import Meta.Data.EndoFunctor
 
 record Con : Set₁ where
   constructor _◃_

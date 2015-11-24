@@ -1,6 +1,6 @@
-module Data.Numeric.Fin where
+module Meta.Data.Fin where
 
-open import Basics
+open import Meta.Basics
 
 data Fin : ℕ → Set where
   zero : {n : ℕ} → Fin (suc n)

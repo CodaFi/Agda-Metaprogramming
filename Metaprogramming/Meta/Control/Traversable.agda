@@ -1,10 +1,10 @@
-module Control.Traversable where
+module Meta.Control.Traversable where
 
-open import Basics
-open import Data.EndoFunctor
-open import Control.Applicative
-open import Data.Monoid
-open import Data.Vector
+open import Meta.Basics
+open import Meta.Data.EndoFunctor
+open import Meta.Control.Applicative
+open import Meta.Data.Monoid
+open import Meta.Data.Vector
 
 record Traversable (F : Set → Set) : Set₁ where
   field

@@ -1,7 +1,7 @@
-module Control.Applicative where
+module Meta.Control.Applicative where
 
-open import Basics
-open import Data.EndoFunctor
+open import Meta.Basics
+open import Meta.Data.EndoFunctor
   
 record Applicative (F : Set → Set) : Set₁ where
   infixl 2 _⍟_

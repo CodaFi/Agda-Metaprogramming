@@ -1,8 +1,8 @@
-module Data.Functor.Container.Indexed where
+module Meta.Data.Functor.Container.Indexed where
 
-open import Basics
+open import Meta.Basics
 open import Level renaming (suc to lsuc)
-open import Language.LambdaCalculus
+open import Meta.Language.LambdaCalculus
 
 record _▷_ (I J : Set) : Set₁ where
   constructor _◃_$_

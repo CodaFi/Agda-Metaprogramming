@@ -1,4 +1,4 @@
-module Basics where
+module Meta.Basics where
 
 open import Level using (Level) renaming (zero to lzero; suc to lsuc)
 

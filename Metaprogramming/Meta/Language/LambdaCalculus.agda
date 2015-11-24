@@ -1,6 +1,6 @@
-module Language.LambdaCalculus where
+module Meta.Language.LambdaCalculus where
 
-open import Basics
+open import Meta.Basics
 
 data ⋆ : Set where
   ι : ⋆

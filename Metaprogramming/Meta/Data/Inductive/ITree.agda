@@ -1,8 +1,8 @@
-module Data.Inductive.ITree where
+module Meta.Data.Inductive.ITree where
 
-open import Basics
-open import Data.Functor.Container.Indexed
-open import Language.LambdaCalculus
+open import Meta.Basics
+open import Meta.Data.Functor.Container.Indexed
+open import Meta.Language.LambdaCalculus
 open import Level renaming (suc to lsuc; zero to lzero)
 
 data ITree {J : Set} (C : J ▷ J)(j : J) : Set where

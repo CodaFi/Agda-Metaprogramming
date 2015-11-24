@@ -1,8 +1,8 @@
-module Data.Inductive.W where
+module Meta.Data.Inductive.W where
 
-open import Basics
-open import Data.Functor.Container
-open import Control.Monad
+open import Meta.Basics
+open import Meta.Data.Functor.Container
+open import Meta.Control.Monad
 
 data W (C : Con) : Set where
   ⟨_⟩ : ⟦ C ⟧◃ (W C) → W C

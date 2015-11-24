@@ -1,7 +1,7 @@
-module Data.Monoid where
+module Meta.Data.Monoid where
 
-open import Basics
-open import Control.Applicative
+open import Meta.Basics
+open import Meta.Control.Applicative
 open import Function using (const)
   
 record Monoid (X : Set) : Set where

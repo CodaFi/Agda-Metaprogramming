@@ -1,10 +1,10 @@
-module Data.Vector where
+module Meta.Data.Vector where
 
-open import Basics
-open import Data.EndoFunctor
-open import Control.Applicative
-open import Control.Monad
-open import Data.Numeric.Fin
+open import Meta.Basics
+open import Meta.Data.EndoFunctor
+open import Meta.Control.Applicative
+open import Meta.Control.Monad
+open import Meta.Data.Fin
 
 data Vec (X : Set) : ℕ → Set where
   ⟨⟩ : Vec X zero

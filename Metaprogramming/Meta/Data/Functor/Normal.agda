@@ -1,14 +1,14 @@
-module Data.Functor.Normal where
+module Meta.Data.Functor.Normal where
 
-open import Basics
+open import Meta.Basics
 open import Function using (const)
 
-open import Data.Vector
-open import Data.Monoid
-open import Data.Numeric.Fin
+open import Meta.Data.Vector
+open import Meta.Data.Monoid
+open import Meta.Data.Fin
 
-open import Control.Applicative
-open import Control.Traversable
+open import Meta.Control.Applicative
+open import Meta.Control.Traversable
 
 record Normal : Set₁ where
   constructor _/_

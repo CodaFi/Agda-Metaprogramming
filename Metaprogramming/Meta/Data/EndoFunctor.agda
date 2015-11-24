@@ -1,6 +1,6 @@
-module Data.EndoFunctor where
+module Meta.Data.EndoFunctor where
 
-open import Basics
+open import Meta.Basics
 
 record EndoFunctor (F : Set → Set) : Set₁ where
   field
