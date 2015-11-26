@@ -8,7 +8,7 @@ open import Vector
 
 record Traversable (F : Set → Set) : Set₁ where
   field
-    traverse : ∀ { G S T }{{ AG : Applicative G }} → (S → G T) -> F S → G (F T)
+    traverse : ∀ { G S T }{{ AG : Applicative G }} → (S → G T) → F S → G (F T)
 
   -- Sweet Jesus, this is ugly.
   endofunctor : EndoFunctor F

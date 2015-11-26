@@ -9,7 +9,8 @@ open import Applicative
 open import Traversable
 open import Monoid
 
-record Normal : Set1 where
+--
+record Normal : Set₁ where
   constructor _/_
   field
     Shape : Set
@@ -56,7 +57,7 @@ nPair : ∀ { X }(F G : Normal) →  ⟦ F ⟧ℕ X × ⟦ G ⟧ℕ X → ⟦ F 
 nPair F G ((ShFx , fs) , (ShGx , gs)) = (ShFx , ShGx) , fs ++ gs
 
 concatSurjectivity : forall {m n : ℕ} {X} -> (x : Vec X (m + n)) -> (vv \ (u : Vec X m) (v : Vec X n) -> u ++ v)  ^-1 x
-concatSurjectivity {zero} v = from ({!!} , v)
+concatSurjectivity {zero} v = from (⟨⟩ , v)
 concatSurjectivity {suc m} (x , v) with concatSurjectivity {m} v
 concatSurjectivity {suc m} (x , .(u ++ w)) | from (u , w) = from ((x , u) , w)
 
@@ -100,8 +101,7 @@ normalT : ∀ F {{TF : Traversable F}} → Normal
 normalT F = F One / sizeT
 
 shapeT : ∀ {F}{{TF : Traversable F}}{X} → F X → F One
-shapeT = {!!}
--- shapeT {F}{{TF}}{{AG}} xs = traverse {{TF}}{F}{{AG}} ?
+shapeT = {!!} -- traverse (λ _ → ⟨⟩)
 
 one : ∀ {X} → X → ⟦ ListN ⟧ℕ X
 one x = 1 , (x , ⟨⟩)
@@ -120,7 +120,7 @@ morphN : ∀ {F G} → (∀ {X} → ⟦ F ⟧ℕ X → ⟦ G ⟧ℕ X) → F ⟶
 morphN f s = f (s , tabulate id)
 
 toNormal : ∀ {F}{{TF : Traversable F}}{X} → F X → ⟦ normalT F ⟧ℕ X
-toNormal fx = {!!}
+toNormal fx = shapeT fx , {!snd (contentsT fx)!}
 
 _⊗_ : Normal → Normal → Normal
 (ShF / szF) ⊗ (ShG / szG) = (ShF × ShG) / λ s → szF (fst s) * szG (snd s)
