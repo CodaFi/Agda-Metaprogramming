@@ -1,22 +1,26 @@
-module LambdaCalculus where
+module Chapter2.LambdaCalculus where
 
-open import Basics
+open import Meta.Basics
 
+-- Start with base types closed under function spaces.
 data ⋆ : Set where
   ι : ⋆
   _▹_ : ⋆ → ⋆ → ⋆
 infixl 5 _▹_
 
+-- Add a dash of context
 data Cx (X : Set) : Set where
   ε   : Cx X
   _,_ : Cx X → X → Cx X
 infixl 4 _,_
 
+-- And a skosh of de Bruijn indices.
 data _∈_ (τ : ⋆) : Cx ⋆ → Set where
   zero : ∀ {Γ} → τ ∈ Γ , τ
   suc  : ∀ {Γ σ} → τ ∈ Γ → τ ∈ Γ , σ
 infix 3 _∈_
 
+-- Mix well with syntax-directed typing judgements and serve immediately.
 data _⊢_ (Γ : Cx ⋆) : ⋆ → Set where
   var : ∀ {τ}
       → τ ∈ Γ
@@ -131,7 +135,7 @@ lambda {Γ} f = lam ((f λ {Δ Ξ}{{q}} → subst (lem Δ Γ (_ , Ξ) q) (λ Γ 
     lem0 ε ε xs ys q q' = refl , q'
     lem0 ε (yz , x) .(yz <>> (x , ys)) ys q refl rewrite lenlem yz (x , ys) = noc (len yz) zero (length ys) q
     lem0 (xz , x) ε xs .(xz <>> (x , xs)) q refl rewrite lenlem xz (x , xs) = noc (len xz) zero (length xs) (_ ⟨ q ]= _ ∎)
-    lem0 (xz , x) (yz , y) xs ys q q' with lem0 xz yz (x , xs) (y , ys) (cong suc q) q' 
+    lem0 (xz , x) (yz , y) xs ys q q' with lem0 xz yz (x , xs) (y , ys) (cong suc q) q'
     lem0 (.yz , .y) (yz , y) .ys ys q q' | refl , refl = refl , refl
 
     lem : ∀ {X} (Δ Γ : Cx X) Ξ → Δ <>> ⟨⟩ ≃ Γ <>> Ξ → Γ <>< Ξ ≃ Δ
@@ -144,7 +148,7 @@ myTest : ε ⊢ ι ▹ ι
 myTest = lambda λ x → x
 
 myTest2 : ε ⊢ (ι ▹ ι) ▹ (ι ▹ ι)
-myTest2 = lambda λ f → lambda λ x → app f (app f x) 
+myTest2 = lambda λ f → lambda λ x → app f (app f x)
 
 mutual
   data _⊨_ (Γ : Cx ⋆) : ⋆ → Set where
@@ -184,7 +188,7 @@ veq? : ∀ {Γ σ τ}(x : σ ∈ Γ)(y : τ ∈ Γ) -> Veq? x y
 veq? zero zero      = same
 veq? zero (suc y)   = diff y
 veq? (suc x) zero  = diff zero
-veq? (suc x) (suc y) with  veq? x y 
+veq? (suc x) (suc y) with  veq? x y
 veq? (suc x) (suc .x) | same = same
 veq? (suc x) (suc .(x ≠ y)) | diff y = diff (suc y)
 
@@ -230,7 +234,7 @@ try₁ : ε ⊨ ((ι ▹ ι) ▹ (ι ▹ ι)) ▹ (ι ▹ ι) ▹ (ι ▹ ι)
 try₁ = normalize (lambda id)
 
 church₂ : ∀ {τ} → ε ⊢ (τ ▹ τ) ▹ τ ▹ τ
-church₂ = lambda λ f → lambda λ x → app f (app f x) 
+church₂ = lambda λ f → lambda λ x → app f (app f x)
 
 try₂ : ε ⊨ (ι ▹ ι) ▹ (ι ▹ ι)
 try₂ = normalize (app (app church₂ church₂) church₂)
@@ -278,7 +282,7 @@ mutual
   quo ι (tt , ())
   quo ι (ff , u) = stopSp u ⟨⟩
   quo (σ ▹ τ) v = lam (quo τ (apply (renVal _ suc v) (ff , var zero)))
-  
+
 eval : ∀ {Γ Δ τ} → Γ ⊢ τ → ⟦ Γ ⟧Cx (Val Δ) → Val Δ τ
 eval (var x) γ = ⟦ x ⟧∈ γ
 eval {Γ}{_}{_} (lam t) γ = tt , λ r s → eval t (renVals Γ r γ , s)
@@ -292,6 +296,3 @@ zero : Γ ⊢ ι
 suc : Γ ⊢ ι → Γ ⊢ ι
 rec : ∀ {τ} → Γ ⊢ τ → Γ ⊢ (ι ▹ τ ▹ τ) → Γ ⊢ ι → Γ ⊢ τ
 -}
-
-
-

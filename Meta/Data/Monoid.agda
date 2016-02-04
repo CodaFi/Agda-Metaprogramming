@@ -1,8 +1,9 @@
-module Monoid where
-  open import Basics
-  open import Applicative
-  open import Function using (const)
-  
+module Meta.Data.Monoid where
+
+open import Meta.Basics
+open import Meta.Control.Applicative
+open import Function using (const)
+
 record Monoid (X : Set) : Set where
   infixr 4 _•_
   field
@@ -45,11 +46,14 @@ record MonoidHom {X}{{MX : Monoid X}}{Y}{{MY : Monoid Y}} (f : X → Y) : Set wh
     resp• : ∀ x x' → f (x • x') ≃ f x • f x'
 open MonoidHom {{...}} public
 
-monoidApplicativeHom : ∀ {X}{{MX : Monoid X}}{Y}{{MY : Monoid Y}} (f : X -> Y){{hf : MonoidHom f}} ->
+fstHom : ∀ {X} → MonoidHom ⟦ ListN ⟧ X {ℕ} fst
+fstHom = record { respNeut = refl; resp& = \ _ _ -> refl }
+
+monoidApplicativeHom : ∀ {X}{{MX : Monoid X}}{Y}{{MY : Monoid Y}} (f : X -> Y) {{hf : MonoidHom f}} ->
   AppHom {{monoidApplicative {{MX}}}} {{monoidApplicative {{MY}}}} f
 monoidApplicativeHom f {{hf}} = record
-  {  respPure  = \ x -> MonoidHom.respε hf
-  ;  respApp   = MonoidHom.resp• hf
+  { respPure  = \ x -> MonoidHom.respε hf
+  ; respApp   = MonoidHom.resp• hf
   }
 
 homSum : ∀ {F G}{{AF : Applicative F}}{{AG : Applicative G}} → (f : F -:> G) → Applicative λ X → F X ⊎ G X
@@ -57,7 +61,7 @@ homSum {F}{G}{{AF}}{{AG}} f = record {
   pure = λ x → tt , (pure {{AF}} x)
   ; _⍟_ = app
   } where
-    app : {S T : Set} → Sg Two (F (S → T) ⟨?⟩ G (S → T)) → Sg Two (F S ⟨?⟩ G S) → Sg Two (F T ⟨?⟩ G T)
+    app : {S T : Set} → Σ Two (F (S → T) ⟨?⟩ G (S → T)) → Σ Two (F S ⟨?⟩ G S) → Σ Two (F T ⟨?⟩ G T)
     app (tt , k) (tt , g) = tt , (k ⍟ g)
     app (tt , k) (ff , g) = ff , (f k ⍟ g)
     app (ff , k) (tt , g) = ff , (k ⍟ (f g))
@@ -85,7 +89,7 @@ homSumOKP {F}{G}{{AF}}{{AG}} FOK GOK f homf = record
                              ∎
     comp : {A B C : Set} → (B → C) → (A → B) → A → C
     comp f g x = f (g x)
-    
+
     lawCoLemma :  {R S T : Set} (g : F (S → T) ⊎ G (S → T)) (h : F (R → S) ⊎ G (R → S)) (r : F R ⊎ G R) →
       _⍟_ {{homSum f}}
        (_⍟_ {{homSum f}}
