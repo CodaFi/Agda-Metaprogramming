@@ -1,25 +1,36 @@
-module W where
+module Chapter3.W where
 
-open import Basics
-open import Containers
-open import Monad
+open import Meta.Basics
+open import Chapter3.Containers
+open import Meta.Control.Monad
 
+-- The least fixed point of a container is a Well-Founded Type.
 data W (C : Con) : Set where
   ⟨_⟩ : ⟦ C ⟧◃ (W C) → W C
 
+-- The well-founded type of natural numbers is the type with Two constructors
+-- given by Zero (⊥) or One (⊤)
 NatW : Set
 NatW = W (Two ◃ Zero ⟨?⟩ One)
 
+-- Now for the constructors:
+
+-- zero selects the Zero constructor that has a... er... "magic" shape.  Such is
+-- life.
 zeroW : NatW
 zeroW = ⟨ tt , magic ⟩
 
+-- suc(n) has a shape that selects the underlying n.
 sucW : NatW → NatW
 sucW n = ⟨ tt , (λ _ → n) ⟩
 
+-- Primitive recursion over well-founded nats.
 precW : ∀ {l}{T : Set l} → T → (NatW → T → T) → NatW → T
 precW z _ ⟨ tt , _ ⟩ = z
 precW z s ⟨ ff , k ⟩ = s (k <>) (precW z s (k <>))
 
+-- Addition is then defined using primitive recursion by standard application of
+-- the suc constructor.
 addW : NatW → NatW → NatW
 addW x y = precW y (λ _ → sucW) x
 
@@ -68,4 +79,3 @@ plug {C} poeq? = (fst ∘ fst) , (λ { ((s , x) , _) x₁ → nplay s x x₁ }) 
   nplay s x x₁ with poeq? s x₁ x
   nplay s x .x | tt , refl = ff , <>
   nplay s x x₁ | ff , pp = tt , x₁ , pp
-  

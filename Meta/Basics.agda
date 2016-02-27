@@ -85,7 +85,7 @@ symmetry refl = refl
 
 data Two : Set where
   tt ff : Two
-  
+
 _⟨?⟩_ : forall {l}{P : Two -> Set l} -> P tt -> P ff -> (b : Two) -> P b
 (t ⟨?⟩ f) tt = t
 (t ⟨?⟩ f) ff = f
@@ -95,6 +95,7 @@ S ⊎ T = Σ Two (S ⟨?⟩ T)
 
 data Zero : Set where
 
+-- ex falso.
 magic : forall {l}{A : Set l} -> Zero -> A
 magic ()
 
@@ -116,4 +117,3 @@ zip _ _ = ⟨⟩
 
 data _⁻¹_ { S T : Set }(f : S → T) : T → Set where
   from : (s : S) → f ⁻¹ f s
-  
