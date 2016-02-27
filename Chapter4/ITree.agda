@@ -1,8 +1,8 @@
-module ITree where
+module Chapter4.ITree where
 
-open import Basics
-open import IndexedContainers
-open import LambdaCalculus
+open import Meta.Basics
+open import Chapter4.IndexedContainers
+open import Meta.Language.LambdaCalculus
 open import Level renaming (suc to lsuc; zero to lzero)
 
 data ITree {J : Set} (C : J ▷ J)(j : J) : Set where
@@ -59,7 +59,7 @@ Colx : ∀ {I J K} → J ▷ K → I ▷ J → I ▷ K
 Colx (S ◃ P $ r) (S₁ ◃ P₁ $ r₁) = (λ x → Σ (S x) λ s → (p : P x s) → S₁ (r x s p))
                                 ◃ (λ x → vv λ s f → Σ (P x s) λ p → P₁ (r x s p) (f p))
                                 $ (λ { j (s , f) (p , p₁) → r₁ (r j s p) (f p) p₁ })
-                                
+
 data Desc {l} (I : Set l) : Set (Level.suc l) where
   var : I → Desc I
   σ π : (A : Set l) (D : A → Desc I) → Desc I
@@ -212,7 +212,7 @@ dataInd F P m i ⟨ ds ⟩ = m i ds (lem (F i) ds) where
   lem (π A D) f a = lem (D a) (f a)
   lem (D ×D E) (l , r) = lem D l , lem E r
   lem (κ x) y = <>
-  
+
 vecNodeIx : (One ⊎ ℕ) ▷ ℕ
 vecNodeIx = descIxCon {J = ℕ} λ
   { zero → κ One
@@ -222,12 +222,12 @@ vecNodeIx = descIxCon {J = ℕ} λ
 μlx : ∀ {I J} → (I ⊎ J) ▷ J → I ▷ J
 μlx {I}{J} F = (ITree F₁ ∘ _,_ ff) ◃ (P₁ ∘ _,_ ff) $ (r₁ ∘ _,_ ff) where
   F₁ : (I ⊎ J) ▷ (I ⊎ J)
-  F₁ = (vv (λ i → One) ⟨?⟩ Shlx F)
-    ◃ (vv (λ _ _ → Zero) ⟨?⟩ Polx F)
-    $ (vv (λ t s ()) ⟨?⟩ rilx F)
+  F₁ = (vv (λ i → One) ⟨?⟩ ShIx F)
+    ◃ (vv (λ _ _ → Zero) ⟨?⟩ PoIx F)
+    $ (vv (λ t s ()) ⟨?⟩ riIx F)
   P₁ : (x : I ⊎ J) → ITree F₁ x → Set
   P₁ (tt , i) _ = One
-  P₁ (ff , j) ⟨ s , k ⟩ = Σ (Polx F j s) λ p → P₁ (rilx F j s p) (k p)
+  P₁ (ff , j) ⟨ s , k ⟩ = Σ (PoIx F j s) λ p → P₁ (riIx F j s p) (k p)
 
   r₁ : (x : I ⊎ J) (t : ITree F₁ x) → P₁ x t → I
   r₁ (tt , i) _ _ = i
