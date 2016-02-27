@@ -36,63 +36,85 @@ data _⊢_ (Γ : Cx ⋆) : ⋆ → Set where
       → Γ ⊢ τ
 infix 3 _⊢_
 
+-- Decode into Agda-isms.  This looks a hell of a lot like Augustsson and
+-- Carlsson's first go at a decoder in "An exercise in dependent types: a well
+-- typed interpreter."
 ⟦_⟧⋆ : ⋆ → Set
-⟦ ι ⟧⋆ = ℕ
+⟦ ι ⟧⋆ = ℕ -- "by way of being nontrivial"
 ⟦ σ ▹ τ ⟧⋆ = ⟦ σ ⟧⋆ → ⟦ τ ⟧⋆
 
+-- Decode a context into an environment with a projection function.
 ⟦_⟧Cx : Cx ⋆ → (⋆ → Set) → Set
 ⟦ ε ⟧Cx V = One
 ⟦ (Γ , σ) ⟧Cx V = ⟦ Γ ⟧Cx V × V σ
 
+-- Decode and project a term in context.
 ⟦_⟧∈ : ∀ {Γ τ V} → τ ∈ Γ → ⟦ Γ ⟧Cx V → V τ
 ⟦ zero ⟧∈ (γ , t) = t
 ⟦ suc i ⟧∈ (γ , s) = ⟦ i ⟧∈ γ
 
+-- Finally, decode terms.
 ⟦_⟧⊢ : ∀ {Γ τ} → Γ ⊢ τ → ⟦ Γ ⟧Cx ⟦_⟧⋆ → ⟦ τ ⟧⋆
 ⟦ var i ⟧⊢ γ = ⟦ i ⟧∈ γ
 ⟦ lam t ⟧⊢ γ = λ s → ⟦ t ⟧⊢ (γ , s)
 ⟦ app f s ⟧⊢ γ = ⟦ f ⟧⊢ γ (⟦ s ⟧⊢ γ)
 
+-- Ren: Simultaneous Renamings
+-- Sub: Substitutions
 Ren Sub : Cx ⋆ → Cx ⋆ → Set
 Ren Γ Δ = ∀ {τ} → τ ∈ Γ → τ ∈ Δ
 Sub Γ Δ = ∀ {τ} → τ ∈ Γ → Δ ⊢ τ
 
+-- Extend a context with a list of variables.
 _<><_ : ∀ { X } → Cx X → List X → Cx X
 xz <>< ⟨⟩ = xz
 xz <>< (x , xs) = xz , x <>< xs
 infixl 4 _<><_
 
+-- Shiftable Simultaneous Substitutions extend both contexts with the new list
+-- of variables, then executes a Simultaneous substitution of the first into the
+-- second.
 Shub : Cx ⋆ → Cx ⋆ → Set
 Shub Γ Δ = ∀ Ξ → Sub (Γ <>< Ξ) (Δ <>< Ξ)
 
+-- With this kit, pushing substitions under binders is trivial
 _//_ : ∀ {Γ Δ}(θ : Shub Γ Δ) {τ} → Γ ⊢ τ → Δ ⊢ τ
-θ // var i = θ ⟨⟩ i
-θ // lam t = lam ((θ ∘ _,_ _) // t)
-θ // app f s = app (θ // f) (θ // s)
+θ // var i = θ ⟨⟩ i -- Sub var is a context extension
+θ // lam t = lam ((θ ∘ _,_ _) // t) -- Sub lam is lam of sub applied in the binding.
+θ // app f s = app (θ // f) (θ // s) -- Sub app is sub down the binder and body.
 
+-- Weakens both contexts in a renaming with σ.
 wkr : ∀ {Γ Δ σ} → Ren Γ Δ → Ren (Γ , σ) (Δ , σ)
-wkr r zero = zero
-wkr r (suc n) = suc (r n)
+wkr r zero = zero -- Weakening a renaming in the empty context does nothing.
+wkr r (suc n) = suc (r n) -- Else iteratively weaken the renaming with the variable.
 
+-- So a renaming can be made into a shiftable substitution simply by iteratively
+-- weakening the renaming.
 ren : ∀ {Γ Δ} → Ren Γ Δ → Shub Γ Δ
-ren r ⟨⟩ = var ∘ r
-ren r (_ , Ξ) = ren (wkr r) Ξ
+ren r ⟨⟩ = var ∘ r -- Shub for the empty renaming is just the names we already know.
+ren r (_ , Ξ) = ren (wkr r) Ξ -- Else Shub by weakening the context.
 
-wks : ∀ {Γ Δ σ} → Sub Γ Δ → Sub (Γ , σ) (Δ , σ)
-wks s zero = var zero
-wks s (suc n) = ren suc // s n
-
+-- So a substitution can be made into a shiftable substitution simply by
+-- iteratively weakening the substitution.
 sub : ∀ {Γ Δ} → Sub Γ Δ → Shub Γ Δ
 sub s ⟨⟩ = s
 sub s (_ , Ξ) = sub (wks s) Ξ
+  where
+    -- Weaks both contexts in a substitution with σ.
+    wks : ∀ {Γ Δ σ} → Sub Γ Δ → Sub (Γ , σ) (Δ , σ)
+    wks s zero = var zero -- Weakening a substitution in the empty context does nothing.
+    wks s (suc n) = ren suc // s n -- Else iteratively weaken the substitution.
 
+-- "A renaming that shifts past any context extension."
 weak : ∀ {Γ} Ξ → Ren Γ (Γ <>< Ξ)
-weak ⟨⟩ i = i
-weak (_ , Ξ) i = weak Ξ (suc i)
+weak ⟨⟩ i = i -- Shift once in the empty context.
+weak (_ , Ξ) i = weak Ξ (suc i) -- Shift 1 + the context
 
+--
 lambda' : ∀ {Γ σ τ} → ((∀ {Ξ} → Γ , σ <>< Ξ ⊢ σ) → Γ , σ ⊢ τ) → Γ ⊢ σ ▹ τ
 lambda' f = lam (f λ {Ξ} → var (weak Ξ zero))
 
+--
 _<>>_ : ∀ {X} → Cx X → List X → List X
 ε <>> ys = ys
 (xz , x) <>> ys = xz <>> (x , ys)
@@ -150,6 +172,9 @@ myTest = lambda λ x → x
 myTest2 : ε ⊢ (ι ▹ ι) ▹ (ι ▹ ι)
 myTest2 = lambda λ f → lambda λ x → app f (app f x)
 
+-- "The right-nested spine representation of β-normal η-long forms.
+-- In other words, Γ ⊨ τ is a normal form in τ and Γ ⊨* τ is a spine for τ
+-- that'll give you a term ι if you ask nicely.
 mutual
   data _⊨_ (Γ : Cx ⋆) : ⋆ → Set where
     lam : ∀ {σ τ} → Γ , σ ⊨ τ → Γ ⊨ σ ▹ τ
@@ -161,28 +186,30 @@ mutual
 infix 3 _⊨_ _⊨*_
 infix 3 _$_
 
-_-_ : ∀ (Γ : Cx ⋆) {τ} (x : τ ∈ Γ) → Cx ⋆
-ε - ()
-(Γ , _) - zero = Γ
-(Γ , sg) - suc x = (Γ - x) , sg
-infixl 4 _-_
+-- Removes the term x from the context.
+_-×_ : ∀ (Γ : Cx ⋆) {τ} (x : τ ∈ Γ) → Cx ⋆
+ε -× ()
+(Γ , _) -× zero = Γ
+(Γ , sg) -× suc x = (Γ -× x) , sg
+infixl 4 _-×_
 
-_≠_ : ∀ {Γ σ} (x : σ ∈ Γ) → Ren (Γ - x) Γ
+-- Embeds a smaller context into a larger one through a
+_≠_ : ∀ {Γ σ} (x : σ ∈ Γ) → Ren (Γ -× x) Γ
 zero ≠ y = suc y
 suc x ≠ zero = zero
 suc x ≠ suc y = suc (x ≠ y)
 
 {-
-⟨_↦_⟩_ : ∀ {Γ σ τ} → (x : σ ∈ Γ) → Γ -x x ⊨ σ → Γ ⊨ τ → Γ -x x ⊨ τ
-⟨ x ↦ s ⟩ lam t = lam (⟨ suc x ↦ ? ⟩ t)
-⟨ x ↦ s ⟩ (x₁ $ x₂) = ?
+⟨_|⟶_⟩_ : ∀ {Γ σ τ} → (x : σ ∈ Γ) → Γ -× x ⊨ σ → Γ ⊨ τ → Γ -× x ⊨ τ
+⟨ x |⟶ s ⟩ lam t = lam (⟨ suc x |⟶ {!   !} ⟩ t)
+⟨ x |⟶ s ⟩ (x₁ $ x₂) = {!   !}
 -}
 
 data Veq? {Γ σ}(x : σ ∈ Γ) : ∀ {τ} → τ ∈ Γ → Set where
   same  :                         Veq? x x
-  diff  : ∀ {τ}(y : τ ∈ Γ - x) → Veq? x (x ≠ y)
+  diff  : ∀ {τ}(y : τ ∈ Γ -× x) → Veq? x (x ≠ y)
 
---Show that every |y| is discriminable with respect to a given |x|.
+-- Show that every |y| is discriminable with respect to a given |x|.
 
 veq? : ∀ {Γ σ τ}(x : σ ∈ Γ)(y : τ ∈ Γ) -> Veq? x y
 veq? zero zero      = same
@@ -192,7 +219,7 @@ veq? (suc x) (suc y) with  veq? x y
 veq? (suc x) (suc .x) | same = same
 veq? (suc x) (suc .(x ≠ y)) | diff y = diff (suc y)
 
---Show how to propagate a renaming through a normal form.
+-- Show how to propagate a renaming through a normal form.
 mutual
   renNm : ∀ {Γ Δ τ} → Ren Γ Δ -> Γ ⊨ τ → Δ ⊨ τ
   renNm ρ (lam n) = lam (renNm (wkr ρ) n)
@@ -202,14 +229,16 @@ mutual
   renSp ρ ⟨⟩ = ⟨⟩
   renSp ρ (x , ss) = renNm ρ x , renSp ρ ss
 
+-- Implement hereditary substitution for normal forms and spines, defined
+-- mutually with application of a normal form to a spine, performing β-reduction.
 mutual
-  ⟨_↦_⟩_ : ∀ {Γ σ τ} → (x : σ ∈ Γ) → Γ - x ⊨ σ → Γ ⊨ τ → Γ - x ⊨ τ
+  ⟨_↦_⟩_ : ∀ {Γ σ τ} → (x : σ ∈ Γ) → Γ -× x ⊨ σ → Γ ⊨ τ → Γ -× x ⊨ τ
   ⟨ x ↦ s ⟩ lam t = lam (⟨ suc x ↦ renNm (_≠_ zero) s ⟩ t)
   ⟨ x ↦ s ⟩ x₁ $ x₂ with veq? x x₁
   ⟨ x ↦ s ⟩ .x $ xs | same = s $$ (⟨ x ↦ s ⟩* xs)
   ⟨ x ↦ s ⟩ .(x ≠ y) $ xs | diff y = y $ (⟨ x ↦ s ⟩* xs)
 
-  ⟨_↦_⟩*_ : ∀ {Γ σ τ} → (x : σ ∈ Γ) → Γ - x ⊨ σ → Γ ⊨* τ → Γ - x ⊨* τ
+  ⟨_↦_⟩*_ : ∀ {Γ σ τ} → (x : σ ∈ Γ) → Γ -× x ⊨ σ → Γ ⊨* τ → Γ -× x ⊨* τ
   ⟨ x ↦ s ⟩* ⟨⟩ = ⟨⟩
   ⟨ x ↦ s ⟩* (t , ts) = (⟨ x ↦ s ⟩ t) , (⟨ x ↦ s ⟩* ts)
 
@@ -223,11 +252,13 @@ infix 2 ⟨_↦_⟩_
 η x ι f = x $ f id ⟨⟩
 η x (σ ▹ τ) f = lam (η (suc x) τ λ ρ ss → f (ρ ∘ suc) ((η (ρ zero) σ (\ _ -> id)) , ss))
 
+-- The usual normalization, but η-long
 normalize : ∀ {Γ τ} → Γ ⊢ τ → Γ ⊨ τ
-normalize (var x) = η x _ λ _ → id
-normalize (lam t) = lam (normalize t)
-normalize (app f s) with normalize f | normalize s
-normalize (app f s) |    lam t       | s2 = ⟨ zero ↦ s2 ⟩ t
+normalize (var x) = η x _ λ _ → id -- Do nothing
+normalize (lam t) = lam (normalize t) -- Normalize under the binder
+normalize (app f s) with normalize f | normalize s -- Normalize both size
+normalize (app f s) |    lam t       | s2 = ⟨ zero ↦ s2 ⟩ t -- Hereditary sub into
+                                          -- nothing to apply, then normalize under the binder
 
 {-
 try₁ : ε ⊨ ((ι ▹ ι) ▹ (ι ▹ ι)) ▹ (ι ▹ ι) ▹ (ι ▹ ι)
@@ -240,19 +271,24 @@ try₂ : ε ⊨ (ι ▹ ι) ▹ (ι ▹ ι)
 try₂ = normalize (app (app church₂ church₂) church₂)
 -}
 
+-- Creative normalization involves:
 data Stop (Γ : Cx ⋆) (τ : ⋆) : Set where
-  var : τ ∈ Γ → Stop Γ τ
-  _$_ : ∀ {σ} → Stop Γ (σ ▹ τ) → Γ ⊨ σ → Stop Γ τ
+  var : τ ∈ Γ → Stop Γ τ -- non-η-long forms that don't understand app
+  _$_ : ∀ {σ} → Stop Γ (σ ▹ τ) → Γ ⊨ σ → Stop Γ τ -- and η-long forms that understand app
 
+-- Lift a renaming into some creative normalization.
 renSt : ∀ {Γ Δ τ} → Ren Γ Δ → Stop Γ τ → Stop Δ τ
 renSt r (var x) = var (r x)
 renSt r (u $ s) = renSt r u $ renNm r s
 
+-- Applying a Stop term to a spine yields a normal form.
 stopSp : ∀ {Γ τ} → Stop Γ τ → Γ ⊨* τ → Γ ⊨ ι
 stopSp (var x) ss = x $ ss
 stopSp (u $ x) ss = stopSp u (x , ss)
 
+-- Look, semantics in a context.  Looks positively Kripkean.
 mutual
+  -- Values either Go or Stop
   Val : Cx ⋆ → ⋆ → Set
   Val Γ τ = Go Γ τ ⊎ Stop Γ τ
 
@@ -260,6 +296,8 @@ mutual
   Go Γ ι = Zero
   Go Γ (σ ▹ τ) = ∀ {Δ} → Ren Γ Δ → Val Δ σ → Val Δ τ
 
+-- Show that values admit renaming.  Extend renaming to environments storing
+-- values.  Construct the identity environment mapping each variable to itself.
 renVal : ∀ {Γ Δ} τ → Ren Γ Δ → Val Γ τ → Val Δ τ
 renVal τ r (ff , u) = ff , renSt r u
 renVal ι r (tt , ())
@@ -283,11 +321,13 @@ mutual
   quo ι (ff , u) = stopSp u ⟨⟩
   quo (σ ▹ τ) v = lam (quo τ (apply (renVal _ suc v) (ff , var zero)))
 
+-- Look, Kripe again.
 eval : ∀ {Γ Δ τ} → Γ ⊢ τ → ⟦ Γ ⟧Cx (Val Δ) → Val Δ τ
 eval (var x) γ = ⟦ x ⟧∈ γ
 eval {Γ}{_}{_} (lam t) γ = tt , λ r s → eval t (renVals Γ r γ , s)
 eval (app f s) γ = apply (eval f γ) (eval s γ)
 
+-- "With all the pieces in place, we get:"
 normByEval : ∀ {Γ τ} -> Γ ⊢ τ → Γ ⊨ τ
 normByEval {Γ}{τ} t = quo τ (eval t (idEnv Γ))
 
