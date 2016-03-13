@@ -5,9 +5,11 @@ open import Chapter4.IndexedContainers
 open import Meta.Language.LambdaCalculus
 open import Level renaming (suc to lsuc; zero to lzero)
 
-data ITree {J : Set} (C : J ▷ J)(j : J) : Set where
+-- The universal inductive family or the fixpoint of an Indexed Container.
+data ITree {J : Set} (C : J ▷ J) (j : J) : Set where
   ⟨_⟩ : ⟦ C ⟧ᵢ (ITree C) j → ITree C j
 
+--
 NatC : One ▷ One
 NatC = (λ _ → Two) ◃ (λ _ → Zero ⟨?⟩ One) $ _
 
@@ -18,18 +20,18 @@ sucC : ITree NatC <> → ITree NatC <>
 sucC n = ⟨ ff , (λ _ → n) ⟩
 
 VecC : Set → ℕ ▷ ℕ
-VecC X = VS ◃ VP $ Vr where
+VecC X = VS ◃ VP $ Vr where -- depending on the length
   VS : ℕ → Set
-  VS zero = One
-  VS (suc n) = X
+  VS zero = One -- nil is unlabelled
+  VS (suc n) = X -- cons carried an element
 
   VP : (n : ℕ) → VS n → Set
-  VP zero _ = Zero
-  VP (suc n) _ = One
+  VP zero _ = Zero -- nil has no children
+  VP (suc n) _ = One -- cons has one child
 
   Vr : (n : ℕ)(s : VS n)(p : VP n s) → ℕ
-  Vr zero <> ()
-  Vr (suc n) x <> = n
+  Vr zero <> () -- nil has no children to index
+  Vr (suc n) x <> = n -- the tail of a cons has the length one less
 
 vnil' : ∀ {X} → ITree (VecC X) 0
 vnil' = ⟨ <> , (λ ()) ⟩
@@ -37,10 +39,25 @@ vnil' = ⟨ <> , (λ ()) ⟩
 vcons' : ∀ {X n} → X → ITree (VecC X) n → ITree (VecC X) (suc n)
 vcons' x xs = ⟨ (x , (λ _ → xs)) ⟩
 
+-- 4.2: Define the simply typed λ-terms as Petersson-Synek trees.
+
+-- A little hack Conor uses to case on the term constructors
 IsArr : ⋆ -> Set
 IsArr ι = Zero
 IsArr (_ ▹ _) = One
 
+-- The simply typed lambda calculus has
+--   Shapes: Given by an ambient context and a term [and our case for its constructor]
+--   Positions: We have 3 cases:
+--   ∘ Case 1 (an arrow to a thing) there are no open positions
+--   ∘ Case 2 (a thing and an arrow) there are potentially 2 holes to fill
+--   ∘ Case 3 (a thing and a thing) there is only one hole
+--  Items: We have 5 cases
+--   ∘ Case 1 (an arrow and a thing) there are no positions, so we can't construct anything
+--   ∘ Case 2 (a thing and proof of an arrow) construct an arrow in the context
+--   ∘ Case 3 (a thing and proof of a term) construct a term in the context
+--   ∘ Case 4 nonsense
+--   ∘ Case 5 (an arrow and two holes) Throw the terms into the context.
 STLC : (Cx ⋆ × ⋆) ▷ (Cx ⋆ × ⋆)
 STLC = (vv λ Γ T → (T ∈ Γ) ⊎ (⋆ ⊎ IsArr T)) ◃ (λ { (Γ , τ) (tt , _) → Zero
                                                   ; (Γ , τ) (ff , (tt , l)) → Two
@@ -52,14 +69,32 @@ STLC = (vv λ Γ T → (T ∈ Γ) ⊎ (⋆ ⊎ IsArr T)) ◃ (λ { (Γ , τ) (tt
                                                   ; (Γ , ι) (ff , (ff , ())) _
                                                   ; (Γ , (σ ▹ τ)) (ff , (ff , p)) _ → (Γ , σ) , τ
                                                   })
-Idlx : ∀ {I} → I ▷ I
-Idlx = (λ _ → One) ◃ (λ j _ → One) $ (λ j _ _ → j)
 
+-- The universal identity, satisfies
+--  ⟦ IdIx ⟧i X i ≅ X i
+-- Shapes: The only possible shape is ⊤
+-- Positions: The only possible position is also ⊤
+-- Items: Just send whatever comes our way back out again.
+IdIx : ∀ {I} → I ▷ I
+IdIx = (λ _ → One) ◃ (λ j _ → One) $ (λ j _ _ → j)
+
+-- The universal composition, satisfies
+-- ⟦ Colx C C′ ⟧i X k ≅ ⟦ C ⟧i (⟦ C′ ⟧i X) k
+--
+-- From the law above we infer the following construction
+-- Shapes: Piped from I shapes to K shapes through J shapes along the
+--         second shape function
+-- Positions: Piped from I positions to K positions through J positions along the
+--            second position function.
+-- Items: Piped from I items to K items through J items along the second item
+--        function.
 Colx : ∀ {I J K} → J ▷ K → I ▷ J → I ▷ K
 Colx (S ◃ P $ r) (S₁ ◃ P₁ $ r₁) = (λ x → Σ (S x) λ s → (p : P x s) → S₁ (r x s p))
                                 ◃ (λ x → vv λ s f → Σ (P x s) λ p → P₁ (r x s p) (f p))
                                 $ (λ { j (s , f) (p , p₁) → r₁ (r j s p) (f p) p₁ })
 
+-- A richer description of the class of indexed functors.
+-- It comes as no surprise that this looks a lot like λΠω
 data Desc {l} (I : Set l) : Set (Level.suc l) where
   var : I → Desc I
   σ π : (A : Set l) (D : A → Desc I) → Desc I
@@ -67,40 +102,46 @@ data Desc {l} (I : Set l) : Set (Level.suc l) where
   κ : Set l → Desc I
 infixr 4 _×D_
 
+-- Interpret a description as Agda types with a little help from a function that
+-- maps the index to things Agda understands.
 ⟦_⟧D : ∀ {l}{I : Set l} → Desc I → (I → Set l) → Set l
-⟦ (var i) ⟧D X = X i
-⟦ (σ A D) ⟧D X = Σ A λ a → ⟦ D a ⟧D X
-⟦ (π A D) ⟧D X = (a : A) → ⟦ D a ⟧D X
-⟦ (D ×D E) ⟧D X = ⟦ D ⟧D X × ⟦ E ⟧D X
-⟦ (κ A) ⟧D X = A
+⟦ (var i) ⟧D X = X i -- Just apply the index yielded by the term to the type former.
+⟦ (σ A D) ⟧D X = Σ A λ a → ⟦ D a ⟧D X -- Lift σ terms to Σ terms
+⟦ (π A D) ⟧D X = (a : A) → ⟦ D a ⟧D X -- Lift π terms to Π terms
+⟦ (D ×D E) ⟧D X = ⟦ D ⟧D X × ⟦ E ⟧D X -- Interpretation of products is the product of interpretations.
+⟦ (κ A) ⟧D X = A -- Extract the type from inside the description.
 
+-- Every indexed container has a description.
 ixConDesc : ∀ {I J} → I ▷ J → J → Desc I
 ixConDesc (S ◃ P $ r) j = σ (S j) λ s → π (P j s) λ p → var (r j s p)
 
-DSh : {I : Set} → Desc I → Set
-DSh (var x) = One
-DSh (σ A D) = Σ A λ a → DSh (D a)
-DSh (π A D) = (a : A) → DSh (D a)
-DSh (D ×D D₁) = DSh D × DSh D₁
-DSh (κ A) = A
-
-DPo : ∀ {I} (D : Desc I) → DSh D → Set
-DPo (var x) x₁ = One
-DPo (σ A D) (x , y) = DPo (D x) y
-DPo (π A D) f = Σ A λ a → DPo (D a) (f a)
-DPo (D ×D D₁) (x , y) = DPo D x ⊎ DPo D₁ y
-DPo (κ A) s = Zero
-
-Dri : ∀ {I}(D : Desc I)(s : DSh D) → DPo D s → I
-Dri (var x) s p = x
-Dri (σ A D) (x , y) p = Dri (D x) y p
-Dri (π A D) f (x , y) = Dri (D x) (f x) y
-Dri (D ×D D₁) (x , y) (tt , p) = Dri D x p
-Dri (D ×D D₁) (x , y) (ff , p) = Dri D₁ y p
-Dri (κ x) s ()
-
+-- Likewise every description has an indexed container.
+--
+-- Naturally, the indexed container is constructed pretty much indentically to
+-- the interpretation function above.
 descIxCon : ∀ {I J} → (J → Desc I) → I ▷ J
-descIxCon F = (DSh ∘ F) ◃ (DPo ∘ F) $ (Dri ∘ F)
+descIxCon F = (DSh ∘ F) ◃ (DPo ∘ F) $ (Dri ∘ F) where
+  DSh : {I : Set} → Desc I → Set
+  DSh (var x) = One
+  DSh (σ A D) = Σ A λ a → DSh (D a)
+  DSh (π A D) = (a : A) → DSh (D a)
+  DSh (D ×D D₁) = DSh D × DSh D₁
+  DSh (κ A) = A
+
+  DPo : ∀ {I} (D : Desc I) → DSh D → Set
+  DPo (var x) x₁ = One
+  DPo (σ A D) (x , y) = DPo (D x) y
+  DPo (π A D) f = Σ A λ a → DPo (D a) (f a)
+  DPo (D ×D D₁) (x , y) = DPo D x ⊎ DPo D₁ y
+  DPo (κ A) s = Zero
+
+  Dri : ∀ {I}(D : Desc I)(s : DSh D) → DPo D s → I
+  Dri (var x) s p = x
+  Dri (σ A D) (x , y) p = Dri (D x) y p
+  Dri (π A D) f (x , y) = Dri (D x) (f x) y
+  Dri (D ×D D₁) (x , y) (tt , p) = Dri D x p
+  Dri (D ×D D₁) (x , y) (ff , p) = Dri D₁ y p
+  Dri (κ x) s ()
 
 {-
 vecD : Set → ℕ → Desc ℕ
@@ -110,23 +151,30 @@ vecD X n =
         )
 -}
 
+-- "Descriptions are quite a lot like inductive family declarations."  Only this
+-- time we have the full power of Agda at our disposal.
 vecD : Set → ℕ → Desc ℕ
 vecD X zero = κ One
 vecD X (suc n) = κ X ×D var n
 
+-- Datatypes from description.
 data Data {l}{J : Set l} (F : J → Desc J)(j : J) : Set l where
   ⟨_⟩ : ⟦ F j ⟧D (Data F) → Data F j
 
+-- "Let us once again construct vectors"
 vnil : ∀ {X} → Data (vecD X) 0
 vnil = ⟨ <> ⟩
 
 vcons : ∀ {X n} → X → Data (vecD X) n → Data (vecD X) (suc n)
 vcons x xs = ⟨ x , xs ⟩
 
+-- Construct a family of descriptions which describes a type like Desc.  As Agda
+-- is not natively cumulative, you will need to shunt types up through the Set l
+-- hierarchy by hand, with this gadget.
 record ⇑ {l}(X : Set l) : Set (lsuc l) where
-  constructor ↑
+  constructor ↑ -- Shunt up a level
   field
-    ↓ : X
+    ↓ : X -- And shunt down a level
 open ⇑ public
 
 {-
@@ -142,6 +190,10 @@ DescD {l} I _ = Σ Desc⋆ (λ
   ; κD → κD (Set l)
   })
 -}
+
+-- Predicate Transformers
+-------------------------
+
 
 Everywhere : ∀ {I J} (C : I ▷ J)(X : I → Set) → Σ I X ▷ Σ J (⟦ C ⟧ᵢ X)
 Everywhere (S ◃ P $ r) X

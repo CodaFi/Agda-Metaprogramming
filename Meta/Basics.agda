@@ -43,9 +43,10 @@ _×_ : {l : Level} -> Set l -> Set l -> Set l
 _×_ S T = Σ S \ _ -> T
 infixr 4 _,_
 
+-- The induction principle for Σ types.
 vv_ : ∀ {k l}{S : Set k}{T : S -> Set k}{P : Σ S T -> Set l} →
-      ((s : S)(t : T s) → P (s , t)) →
-      (p : Σ S T) → P p
+      ((s : S)(t : T s) → P (s , t)) → -- Given a witness to the construction of P
+      (p : Σ S T) → P p -- And a Σ, you get a p.
 (vv p) (s , t) = p s t
 infixr 1 vv_
 

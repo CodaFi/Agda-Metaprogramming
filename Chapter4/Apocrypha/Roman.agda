@@ -6,6 +6,8 @@ open import ITree
 open import Containers
 open import W
 
+-- A Roman Container is a Container decorated by functions that attach input
+-- indices to positions and an output index to the shape.
 record Roman (I J : Set) : Set₁ where
   constructor SPqr
   field
@@ -17,7 +19,6 @@ record Roman (I J : Set) : Set₁ where
   Plain = S ◃ P
   ⟦_⟧R : (I → Set) → (J → Set)
   ⟦_⟧R X j = Σ (Σ S λ s → q s ≃ j) (vv λ s _ → (p : P s) → X (r s p))
-  
 Plain = Roman.Plain
 ⟦_⟧R = Roman.⟦_⟧R
 
@@ -116,5 +117,3 @@ HANCOCK' I J = J → Fam (Fam (⇑ I))
 
 NOTTINGHAM' : Set → Set → Set₁
 NOTTINGHAM' I J = J → Fam (Pow (⇑ I))
-
-
