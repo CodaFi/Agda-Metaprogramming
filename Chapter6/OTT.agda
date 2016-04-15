@@ -1,7 +1,7 @@
 module Chapter6.OTT where
 
 open import Meta.Basics
-open import Chapter6.InductionRecursion
+open import Meta.Data.Inductive.Recursion
 open import Meta.Data.Functor.Container.Indexed
 open import Meta.Data.Inductive.ITree
 
