@@ -1,9 +1,9 @@
-module OTT where
+module Chapter6.OTT where
 
-open import Basics
-open import InductionRecursion
-open import IndexedContainers
-open import ITree
+open import Meta.Basics
+open import Chapter6.InductionRecursion
+open import Meta.Data.Functor.Container.Indexed
+open import Meta.Data.Inductive.ITree
 
 {-
 data Favourite : (ℕ → ℕ) → Set where
@@ -12,7 +12,7 @@ data Favourite : (ℕ → ℕ) → Set where
 data Favourite (f : ℕ → ℕ) : Set where
   favourite : (λ x → zero + x) ≃ f → Favourite f
 -}
-                                                    
+
 mutual
   EQ : (X Y : TU) → TU × (⟦ X ⟧TU → ⟦ Y ⟧TU → TU)
   EQ Zero' Zero' = One' , λ _ _ → One'
@@ -51,7 +51,7 @@ mutual
                                              Π' P λ p → Π' P' λ p' → Π' (Eq P p P' p') λ _ →
                                              teq (r p) (r' p') (k p) (k' p') -}
   EQ _ _ = Zero' , λ _ _ → One'
-  
+
   _↔_ : TU → TU → TU
   X ↔ Y = fst (EQ X Y)
 
@@ -61,7 +61,7 @@ mutual
 coe : (X Y : TU) → ⟦ X ↔ Y ⟧TU → ⟦ X ⟧TU → ⟦ Y ⟧TU
 postulate
   coh : (X Y : TU) (Q : ⟦ X ↔ Y ⟧TU) (x : ⟦ X ⟧TU) → ⟦ Eq X x Y (coe X Y Q x) ⟧TU
-coe X Y Q x = {!!}
+coe X Y Q x = {! !}
 
 postulate
   reflTU : (X : TU) (x : ⟦ X ⟧TU) → ⟦ Eq X x X x ⟧TU
@@ -129,4 +129,3 @@ mutual
 
   PEQ (Prf' P) (Prf' Q) = ((P ⇒ Q) ∧ (Q ⇒ P)) , λ _ _ → One'
   PEQ _ _ = Zero' , λ _ _ → One'
-

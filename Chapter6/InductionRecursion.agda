@@ -1,9 +1,9 @@
-module InductionRecursion where
+module Chapter6.InductionRecursion where
 
-open import Basics
-open import Fin
-open import ITree
-open import IndexedContainers
+open import Meta.Basics
+open import Meta.Data.Fin
+open import Meta.Data.Inductive.ITree
+open import Meta.Data.Functor.Container.Indexed
 
 sum prod : (n : ℕ) → (Fin n → ℕ) → ℕ
 sum zero _ = 0
@@ -289,7 +289,7 @@ mutual
     κ : Set → Irish I
     π : (S : Set) (T : S → Irish I) → Irish I
     σ : (S : Irish I) (T : Info S → Irish I) → Irish I
-    
+
   Info : ∀ {I} → Irish I → Set₁
   Info {I} ι = I
   Info (κ A) = ⇑ A

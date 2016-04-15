@@ -195,7 +195,7 @@ vaRM : {n : ℕ}(R : RecM n)(i : Fin n)(r : ⟦ R ⟧RM) → TyRM R i r
 -- Makes no sense to project out of nothing.
 vaRM ε () r
 -- If the structure has one field, project it out.
-vaRM (R , A) zero (_ , fld) = snd
+vaRM (R , A) zero (_ , fld) = fld
 -- Else try again.
 vaRM (R , A) (suc i) (idx , _) = vaRM R i idx
 -- If the structure has one manifest field, project it out by feeding it what it depends on.
