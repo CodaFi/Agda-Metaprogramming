@@ -11,10 +11,13 @@ open import W
 record Roman (I J : Set) : Set₁ where
   constructor SPqr
   field
-    S : Set
-    P : S → Set
-    q : S → J
-    r : (s : S) → P s → I
+    S : Set -- A set of shapes
+    P : S → Set -- And a function taking shapes to input positions
+    q : S → J -- - And a function taking shapes to output positions
+    r : (s : S) → P s → I -- And a function taking output positions to elements.
+
+  -- Lower a Roman Container back to a plain container by dropping the
+  -- input/output distinction and the element grabber.
   Plain : Con
   Plain = S ◃ P
   ⟦_⟧R : (I → Set) → (J → Set)

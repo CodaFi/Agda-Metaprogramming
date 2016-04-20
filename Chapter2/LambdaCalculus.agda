@@ -110,11 +110,16 @@ weak : ∀ {Γ} Ξ → Ren Γ (Γ <>< Ξ)
 weak ⟨⟩ i = i -- Shift once in the empty context.
 weak (_ , Ξ) i = weak Ξ (suc i) -- Shift 1 + the context
 
---
 lambda' : ∀ {Γ σ τ} → ((∀ {Ξ} → Γ , σ <>< Ξ ⊢ σ) → Γ , σ ⊢ τ) → Γ ⊢ σ ▹ τ
 lambda' f = lam (f λ {Ξ} → var (weak Ξ zero))
 
+-- "... Constructor-based unification is insufficient to solve for the prefix of
+-- a context, given a common suffix.
 --
+-- By contrast, solving for a suffix is easy when the prefix is just a value: it
+-- requires only the stripping off of matching constructors. So, we can cajole
+-- Agda into solving the problem by working with its reversal, via the ‘chips’
+-- operator:"
 _<>>_ : ∀ {X} → Cx X → List X → List X
 ε <>> ys = ys
 (xz , x) <>> ys = xz <>> (x , ys)
@@ -125,27 +130,27 @@ lambda : ∀ {Γ σ τ} → ((∀ {Δ Ξ} {{_ : Δ <>> ⟨⟩ ≃ Γ <>> (σ , �
 lambda {Γ} f = lam ((f λ {Δ Ξ}{{q}} → subst (lem Δ Γ (_ , Ξ) q) (λ Γ → Γ ⊢ _) (var (weak Ξ zero))))
   where
     {- This is Conor's.  He wasn't kidding about the ugly. -}
-    sucI : (a b : ℕ) -> (_≃_ {lzero}{ℕ} (suc a) (suc b)) → a ≃ b
+    sucI : (a b : ℕ) → (_≃_ {lzero}{ℕ} (suc a) (suc b)) → a ≃ b
     sucI .b b refl = refl
 
-    grr : (x y : ℕ) -> suc x + y ≃ x + suc y
+    grr : (x y : ℕ) → suc x + y ≃ x + suc y
     grr zero y = refl
     grr (suc x) y rewrite grr x y = refl
 
-    _+a_ : ℕ -> ℕ -> ℕ
+    _+a_ : ℕ → ℕ → ℕ
     zero +a y = y
     suc x +a y = x +a suc y
 
-    noc' : (x y : ℕ) -> suc (x + y) ≃ y -> {A : Set} -> A
+    noc' : (x y : ℕ) → suc (x + y) ≃ y → {A : Set} → A
     noc' x zero ()
     noc' x (suc y) q = noc' x y
        (suc (x + y) =[ grr x y ⟩ x + suc y =[ sucI _ _ q ⟩ y ∎)
 
-    noc : (x k y : ℕ) -> x +a (suc k + y) ≃ y → {A : Set} → A
+    noc : (x k y : ℕ) → x +a (suc k + y) ≃ y → {A : Set} → A
     noc zero k y q = noc' k y q
     noc (suc x) k y q = noc x (suc k) y q
 
-    len : ∀ {X} -> Cx X -> ℕ
+    len : ∀ {X} → Cx X → ℕ
     len ε = zero
     len (xz , x) = suc (len xz)
 
@@ -176,12 +181,17 @@ myTest2 = lambda λ f → lambda λ x → app f (app f x)
 -- In other words, Γ ⊨ τ is a normal form in τ and Γ ⊨* τ is a spine for τ
 -- that'll give you a term ι if you ask nicely.
 mutual
+  -- Γ ⊨ τ is the type of normal forms in τ
   data _⊨_ (Γ : Cx ⋆) : ⋆ → Set where
     lam : ∀ {σ τ} → Γ , σ ⊨ τ → Γ ⊨ σ ▹ τ
     _$_ : ∀ {τ} → τ ∈ Γ → Γ ⊨* τ → Γ ⊨ ι
 
+  -- Γ ⊨* τ is the type of spines for τ delivering ι.
   data _⊨*_ (Γ : Cx ⋆) : ⋆ → Set where
+    -- Just deliver ι
     ⟨⟩ : Γ ⊨* ι
+    -- ι comes with a sequence of destructors applied to it that have to
+    -- be normalized away.
     _,_ : ∀ {σ τ} → Γ ⊨ σ → Γ ⊨* τ → Γ ⊨* σ ▹ τ
 infix 3 _⊨_ _⊨*_
 infix 3 _$_
@@ -205,13 +215,15 @@ suc x ≠ suc y = suc (x ≠ y)
 ⟨ x |⟶ s ⟩ (x₁ $ x₂) = {!   !}
 -}
 
+-- Boolean equality is insufficient to identify whether a term is a suitable
+-- spine for the expression - we need to know its representation in Γ -× x.
 data Veq? {Γ σ}(x : σ ∈ Γ) : ∀ {τ} → τ ∈ Γ → Set where
   same  :                         Veq? x x
   diff  : ∀ {τ}(y : τ ∈ Γ -× x) → Veq? x (x ≠ y)
 
 -- Show that every |y| is discriminable with respect to a given |x|.
 
-veq? : ∀ {Γ σ τ}(x : σ ∈ Γ)(y : τ ∈ Γ) -> Veq? x y
+veq? : ∀ {Γ σ τ}(x : σ ∈ Γ)(y : τ ∈ Γ) → Veq? x y
 veq? zero zero      = same
 veq? zero (suc y)   = diff y
 veq? (suc x) zero  = diff zero
@@ -221,10 +233,17 @@ veq? (suc x) (suc .(x ≠ y)) | diff y = diff (suc y)
 
 -- Show how to propagate a renaming through a normal form.
 mutual
-  renNm : ∀ {Γ Δ τ} → Ren Γ Δ -> Γ ⊨ τ → Δ ⊨ τ
+  -- Renaming for normal forms.
+  renNm : ∀ {Γ Δ τ} → Ren Γ Δ → Γ ⊨ τ → Δ ⊨ τ
+  -- Push the renaming under the binder and push the renaming through the body
+  -- of the binder by iteratively weakening the context at each level with the
+  -- renaming.
   renNm ρ (lam n) = lam (renNm (wkr ρ) n)
+  -- Rename the bound variable and push the renaming through the spine of the
+  -- right side of the application.
   renNm ρ (f $ x) = ρ f $ (renSp ρ x)
 
+  -- Renaming with spines.  Maps a normal form renaming over each destructor.
   renSp : ∀ {Γ Δ τ} → Ren Γ Δ → Γ ⊨* τ → Δ ⊨* τ
   renSp ρ ⟨⟩ = ⟨⟩
   renSp ρ (x , ss) = renNm ρ x , renSp ρ ss
@@ -232,31 +251,43 @@ mutual
 -- Implement hereditary substitution for normal forms and spines, defined
 -- mutually with application of a normal form to a spine, performing β-reduction.
 mutual
+  -- Substitution for normal forms.
   ⟨_↦_⟩_ : ∀ {Γ σ τ} → (x : σ ∈ Γ) → Γ -× x ⊨ σ → Γ ⊨ τ → Γ -× x ⊨ τ
+  -- Push the substitution under the binder and recurse.
   ⟨ x ↦ s ⟩ lam t = lam (⟨ suc x ↦ renNm (_≠_ zero) s ⟩ t)
+  -- Are you ready for a substitution?
   ⟨ x ↦ s ⟩ x₁ $ x₂ with veq? x x₁
+  -- Yep!  Sub in s in the binder and recurse into the spine to keep renaming.
   ⟨ x ↦ s ⟩ .x $ xs | same = s $$ (⟨ x ↦ s ⟩* xs)
+  -- Nope!  Don't sub, but recurse into the spine to try again.
   ⟨ x ↦ s ⟩ .(x ≠ y) $ xs | diff y = y $ (⟨ x ↦ s ⟩* xs)
 
+  -- Substitution for spines.  As before, map normal-form substitution down the
+  -- spine.
   ⟨_↦_⟩*_ : ∀ {Γ σ τ} → (x : σ ∈ Γ) → Γ -× x ⊨ σ → Γ ⊨* τ → Γ -× x ⊨* τ
   ⟨ x ↦ s ⟩* ⟨⟩ = ⟨⟩
   ⟨ x ↦ s ⟩* (t , ts) = (⟨ x ↦ s ⟩ t) , (⟨ x ↦ s ⟩* ts)
 
+  -- Evaluation of the destructors in a spine
   _$$_ : ∀ {Γ τ} → Γ ⊨ τ → Γ ⊨* τ → Γ ⊨ ι
+  -- Yield ι
   f $$ ⟨⟩ = f
+  -- Substitute the argument into the body of the function.
   lam f $$ (s , ss) = (⟨ zero ↦ s ⟩ f) $$ ss
 infix 3 _$$_
 infix 2 ⟨_↦_⟩_
 
-η : ∀ {Γ σ}(x : σ ∈ Γ) τ → (∀ {Δ} -> Ren Γ Δ -> Δ ⊨* τ -> Δ ⊨* σ) → Γ ⊨ τ
+-- Delivers a variable x in η-long form.
+-- Naturally, this is Conor's.  I can't really think of a better way to do this.
+η : ∀ {Γ σ}(x : σ ∈ Γ) τ → (∀ {Δ} → Ren Γ Δ → Δ ⊨* τ → Δ ⊨* σ) → Γ ⊨ τ
 η x ι f = x $ f id ⟨⟩
-η x (σ ▹ τ) f = lam (η (suc x) τ λ ρ ss → f (ρ ∘ suc) ((η (ρ zero) σ (\ _ -> id)) , ss))
+η x (σ ▹ τ) f = lam (η (suc x) τ λ ρ ss → f (ρ ∘ suc) ((η (ρ zero) σ (λ _ → id)) , ss))
 
 -- The usual normalization, but η-long
 normalize : ∀ {Γ τ} → Γ ⊢ τ → Γ ⊨ τ
 normalize (var x) = η x _ λ _ → id -- Do nothing
 normalize (lam t) = lam (normalize t) -- Normalize under the binder
-normalize (app f s) with normalize f | normalize s -- Normalize both size
+normalize (app f s) with normalize f | normalize s -- Normalize both sides
 normalize (app f s) |    lam t       | s2 = ⟨ zero ↦ s2 ⟩ t -- Hereditary sub into
                                           -- nothing to apply, then normalize under the binder
 
@@ -301,7 +332,7 @@ mutual
 renVal : ∀ {Γ Δ} τ → Ren Γ Δ → Val Γ τ → Val Δ τ
 renVal τ r (ff , u) = ff , renSt r u
 renVal ι r (tt , ())
-renVal (σ ▹ τ) r (tt , f) = tt , (λ r' s -> f (r' ∘ r) s)
+renVal (σ ▹ τ) r (tt , f) = tt , (λ r' s → f (r' ∘ r) s)
 
 renVals : ∀ Θ {Γ Δ} → Ren Γ Δ → ⟦ Θ ⟧Cx (Val Γ) → ⟦ Θ ⟧Cx (Val Δ)
 renVals ε r _ = <>
@@ -328,7 +359,7 @@ eval {Γ}{_}{_} (lam t) γ = tt , λ r s → eval t (renVals Γ r γ , s)
 eval (app f s) γ = apply (eval f γ) (eval s γ)
 
 -- "With all the pieces in place, we get:"
-normByEval : ∀ {Γ τ} -> Γ ⊢ τ → Γ ⊨ τ
+normByEval : ∀ {Γ τ} → Γ ⊢ τ → Γ ⊨ τ
 normByEval {Γ}{τ} t = quo τ (eval t (idEnv Γ))
 
 {-

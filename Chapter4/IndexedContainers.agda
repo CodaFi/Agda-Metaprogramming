@@ -24,7 +24,8 @@ record _▷_ (I J : Set) : Set₁ where
   ⟦_⟧ᵢ X j = Σ (ShIx j) λ s → (p : PoIx j s) → X (riIx j s p)
 open _▷_ public
 
---
+-- The interpretation of indexed containers as operations on indexed families of
+-- sets.
 _-:>_ : ∀ {k l}{I : Set k} → (I → Set l) → (I → Set l) → Set (l ⊔ k)
 X -:> Y = ∀ i → X i → Y i
 

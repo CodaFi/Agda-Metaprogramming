@@ -16,7 +16,7 @@ infixr 1 _◃_
 
 -- Conor says: "We may readily check that the polynomials are all containers."
 
--- Types are contains with a unique shape.
+-- Types are containers with a unique shape.
 -- K◃ : X → (_ → 0)
 K◃ : Set → Con
 K◃ A = A ◃ λ _ → Zero
