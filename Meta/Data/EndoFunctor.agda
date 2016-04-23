@@ -3,6 +3,7 @@ module Meta.Data.EndoFunctor where
 open import Meta.Basics
 
 record EndoFunctor (F : Set → Set) : Set₁ where
+  constructor MkEndo
   field
     map : ∀ { S T } → (S → T) → F S → F T
 open EndoFunctor {{...}} public

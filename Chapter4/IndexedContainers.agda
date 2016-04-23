@@ -1,7 +1,7 @@
 module Chapter4.IndexedContainers where
 
+open import Agda.Primitive
 open import Meta.Basics
-open import Level renaming (suc to lsuc)
 open import Meta.Language.LambdaCalculus
 
 -- An I ▷ J describes J sorts of structures in terms of I sorts of elements.

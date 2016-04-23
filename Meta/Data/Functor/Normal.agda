@@ -1,7 +1,6 @@
 module Meta.Data.Functor.Normal where
 
 open import Meta.Basics
-open import Function using (const)
 
 open import Meta.Data.Vector
 open import Meta.Data.Monoid
@@ -151,7 +150,7 @@ drop F G (ShF , ShG) = (ShF , (vec ShG)) , {!!}
  where
   k : {n m : ℕ} -> n ≃ m -> Vec (Fin m) n
   k {n} {.n} refl = tabulate id
-  
+
 fstHom : ∀ {X} → MonoidHom {⟦ ListN ⟧ℕ X}{{listNMonoid}}{ℕ}{{sumMonoid}} fst
 fstHom = record
   { respε = refl
@@ -177,36 +176,36 @@ unpack : ∀ {X} -> Vec X 1 -> X
 unpack (x , _) = x
 
 batcher : forall {F} {{TF : Traversable F}} -> F One -> forall {X} -> Batch X (F X)
-batcher {F} {{TF}} sF {X} = traverse {F} {{TF}} {Batch X} {{ABatch}} (λ _ → 1 , unpack) sF 
+batcher {F} {{TF}} sF {X} = traverse {F} {{TF}} {Batch X} {{ABatch}} (λ _ → 1 , unpack) sF
 
 open import Level
 
-coherence : ∀ {F} {{TF : Traversable F}} {X} -> TraversableOKP F 
+coherence : ∀ {F} {{TF : Traversable F}} {X} -> TraversableOKP F
             → (sF : F One) →
                fst (batcher {F} {{TF}} sF {X}) ≃
                traverse {F} {{TF}} {λ _ → ℕ} {One} {One} {{monoidApplicative}} (λ _ → 1) sF
-coherence {F} {{TF}} {X} tokF u = 
-   fst (traverse TF (λ _ → 1 , unpack) u) 
-     ⟨ TraversableOKP.lawPHom {F} {TF} tokF {Batch X} {{ABatch}} {λ _ → ℕ} {{monoidApplicative}} fst (λ _ → 1 , unpack) 
+coherence {F} {{TF}} {X} tokF u =
+   fst (traverse TF (λ _ → 1 , unpack) u)
+     ⟨ TraversableOKP.lawPHom {F} {TF} tokF {Batch X} {{ABatch}} {λ _ → ℕ} {{monoidApplicative}} fst (λ _ → 1 , unpack)
         (record { respPure = λ {X₁} x → refl
-                ; respApp  = λ f s → refl
-                }) u ]= 
+                ; resp-⍟  = λ f s → refl
+                }) u ]=
    (traverse TF {λ _ → ℕ} {One {Level.zero}} {X}
      {{record { pure = λ {_} _ → 0; _<*>_ = λ {_} {_} → _+_ }}}
      (λ a → 1) u)
-     =[ TraversableOKP.lawPCo {F} {TF} tokF 
-                              {G = id} {{AG = applicativeId}} 
-                              {H = λ _ → ℕ} {{AH = monoidApplicative}} 
+     =[ TraversableOKP.lawPCo {F} {TF} tokF
+                              {G = id} {{AG = applicativeId}}
+                              {H = λ _ → ℕ} {{AH = monoidApplicative}}
                               (λ _ → <>) (λ _ → 1) u ⟩
    (traverse TF {λ _ → ℕ} {One {Level.zero}} {One}
      {{record { pure = λ {_} _ → 0; _<*>_ = λ {_} {_} → _+_ }}}
      (λ a → 1) u)
      ∎
-     
+
 fromNormal :  ∀ {F}{{TF : Traversable F}} -> TraversableOKP F ->
               ∀ {X} -> ⟦ normalT F ⟧ℕ X -> F X
-fromNormal {F} {{TF}} tokf {X} (sF , cF) with (coherence {F} {{TF}} {X} tokf sF) 
-fromNormal {F} {{TF}} tokf {X} (sF , cF) | q with batcher {F} {{TF}} sF {X} 
+fromNormal {F} {{TF}} tokf {X} (sF , cF) with (coherence {F} {{TF}} {X} tokf sF)
+fromNormal {F} {{TF}} tokf {X} (sF , cF) | q with batcher {F} {{TF}} sF {X}
 fromNormal {F} {{TF}} tokf {X} (sF , cF) | q | n , csF = csF (subst (symmetry q) (λ u → Vec X u) cF)
 
 data Tree (N : Normal) : Set where

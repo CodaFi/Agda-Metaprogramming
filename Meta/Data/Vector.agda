@@ -74,22 +74,27 @@ concat : ∀ {n X} → Vec (Vec X n) n -> Vec X n
 concat ⟨⟩             = ⟨⟩
 concat ((x , xs) , xss) = x , concat (vmap tail xss)
 
-monadVec : ∀ {n} → Monad λ X → Vec X n
-monadVec = record { return = vec; _>>=_ = λ m f → concat (vmap f m) }
+instance
+  monadVec : ∀ {n} → Monad λ X → Vec X n
+  monadVec = record { return = vec; _>>=_ = λ m f → concat (vmap f m) }
 
-applicativeVec : ∀ {n} → Applicative λ X → Vec X n
-applicativeVec = record { pure = vec; _⍟_ = vapp }
+  applicativeVec : ∀ {n} → Applicative λ X → Vec X n
+  applicativeVec = record { pure = vec; _⍟_ = vapp }
 
-endoFunctorVec : ∀ {n} → EndoFunctor λ X → Vec X n
-endoFunctorVec = record { map = vmap }
+  endoFunctorVec : ∀ {n} → EndoFunctor λ X → Vec X n
+  endoFunctorVec = record { map = vmap }
 
-vecEndoFunctorOKP : ∀ {n} → EndoFunctorOKP (λ X → Vec X n) {{endoFunctorVec}}
-vecEndoFunctorOKP = record { endoFunctorId = vecId; endoFunctorCo = λ f g → vecComp f g }
-  where
-    vecId : ∀ {n X} → (x : Vec X n) → vapp (vec id) x ≃ x
-    vecId ⟨⟩ = refl
-    vecId (x , xs) rewrite vecId xs = refl
+  vecEndoFunctorOKP : ∀ {n} → EndoFunctorOKP (λ X → Vec X n)
+  vecEndoFunctorOKP = record { endoFunctorId = vecId; endoFunctorCo = λ f g → vecComp f g }
+    where
+      vecId : ∀ {n X} → (x : Vec X n) → vapp (vec id) x ≃ x
+      vecId ⟨⟩ = refl
+      vecId (x , xs) rewrite vecId xs = refl
 
-    vecComp : ∀ {n R S T} → (f : S → T)(g : R → S) → (x : Vec R n) → (map {{endoFunctorVec}} f ∘ map {{endoFunctorVec}} g) x ≃ map {{endoFunctorVec}} (f ∘ g) x
-    vecComp f g ⟨⟩ = refl
-    vecComp f g (x , xs) rewrite vecComp f g xs = refl
+      vecComp : ∀ {n R S T} → (f : S → T)(g : R → S) → (x : Vec R n) → (map f ∘ map g) x ≃ map (f ∘ g) x
+      vecComp f g ⟨⟩ = refl
+      vecComp f g (x , xs) rewrite vecComp f g xs = refl
+
+allFin : ∀ n → Vec (Fin n) n
+allFin zero    = ⟨⟩
+allFin (suc n) = zero , map suc (allFin n)

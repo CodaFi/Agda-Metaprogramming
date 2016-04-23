@@ -1,9 +1,10 @@
 module Meta.Data.Inductive.ITree where
 
+open import Agda.Primitive
+
 open import Meta.Basics
 open import Meta.Data.Functor.Container.Indexed
 open import Meta.Language.LambdaCalculus
-open import Level renaming (suc to lsuc; zero to lzero)
 
 data ITree {J : Set} (C : J ▷ J)(j : J) : Set where
   ⟨_⟩ : ⟦ C ⟧ᵢ (ITree C) j → ITree C j
@@ -59,8 +60,8 @@ Colx : ∀ {I J K} → J ▷ K → I ▷ J → I ▷ K
 Colx (S ◃ P $ r) (S₁ ◃ P₁ $ r₁) = (λ x → Σ (S x) λ s → (p : P x s) → S₁ (r x s p))
                                 ◃ (λ x → vv λ s f → Σ (P x s) λ p → P₁ (r x s p) (f p))
                                 $ (λ { j (s , f) (p , p₁) → r₁ (r j s p) (f p) p₁ })
-                                
-data Desc {l} (I : Set l) : Set (Level.suc l) where
+
+data Desc {l} (I : Set l) : Set (lsuc l) where
   var : I → Desc I
   σ π : (A : Set l) (D : A → Desc I) → Desc I
   _×D_ : Desc I → Desc I → Desc I
@@ -212,7 +213,7 @@ dataInd F P m i ⟨ ds ⟩ = m i ds (lem (F i) ds) where
   lem (π A D) f a = lem (D a) (f a)
   lem (D ×D E) (l , r) = lem D l , lem E r
   lem (κ x) y = <>
-  
+
 vecNodeIx : (One ⊎ ℕ) ▷ ℕ
 vecNodeIx = descIxCon {J = ℕ} λ
   { zero → κ One

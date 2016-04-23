@@ -30,7 +30,7 @@ data _⊢_ (Γ : Cx ⋆) : ⋆ → Set where
       → Γ ⊢ σ ▹ τ → Γ ⊢ σ
       -------------------
       → Γ ⊢ τ
-infix 3 _⊢_
+infix 2 _⊢_
 
 ⟦_⟧⋆ : ⋆ → Set
 ⟦ ι ⟧⋆ = ℕ
@@ -55,8 +55,8 @@ Sub Γ Δ = ∀ {τ} → τ ∈ Γ → Δ ⊢ τ
 
 _<><_ : ∀ { X } → Cx X → List X → Cx X
 xz <>< ⟨⟩ = xz
-xz <>< (x , xs) = xz , x <>< xs
-infixl 4 _<><_
+xz <>< (x , xs) = (xz , x) <>< xs
+infixl 3 _<><_
 
 Shub : Cx ⋆ → Cx ⋆ → Set
 Shub Γ Δ = ∀ Ξ → Sub (Γ <>< Ξ) (Δ <>< Ξ)
@@ -93,7 +93,7 @@ _<>>_ : ∀ {X} → Cx X → List X → List X
 ε <>> ys = ys
 (xz , x) <>> ys = xz <>> (x , ys)
 
-open import Level renaming (zero to lzero; suc to lsuc)
+open import Agda.Primitive
 
 lambda : ∀ {Γ σ τ} → ((∀ {Δ Ξ} {{_ : Δ <>> ⟨⟩ ≃ Γ <>> (σ , Ξ)}} → Δ ⊢ σ) → Γ , σ ⊢ τ) → Γ ⊢ σ ▹ τ
 lambda {Γ} f = lam ((f λ {Δ Ξ}{{q}} → subst (lem Δ Γ (_ , Ξ) q) (λ Γ → Γ ⊢ _) (var (weak Ξ zero))))
@@ -112,8 +112,14 @@ lambda {Γ} f = lam ((f λ {Δ Ξ}{{q}} → subst (lem Δ Γ (_ , Ξ) q) (λ Γ 
 
     noc' : (x y : ℕ) -> suc (x + y) ≃ y -> {A : Set} -> A
     noc' x zero ()
-    noc' x (suc y) q = noc' x y
-       (suc (x + y) =[ grr x y ⟩ x + suc y =[ sucI _ _ q ⟩ y ∎)
+    noc' x (suc y) q = noc' x y $′
+      begin
+        suc (x + y)
+      =[ grr x y ⟩
+        x + suc y
+      =[ sucI _ _ q ⟩
+        y
+      ∎
 
     noc : (x k y : ℕ) -> x +a (suc k + y) ≃ y → {A : Set} → A
     noc zero k y q = noc' k y q
@@ -131,20 +137,25 @@ lambda {Γ} f = lam ((f λ {Δ Ξ}{{q}} → subst (lem Δ Γ (_ , Ξ) q) (λ Γ 
     lem0 ε ε xs ys q q' = refl , q'
     lem0 ε (yz , x) .(yz <>> (x , ys)) ys q refl rewrite lenlem yz (x , ys) = noc (len yz) zero (length ys) q
     lem0 (xz , x) ε xs .(xz <>> (x , xs)) q refl rewrite lenlem xz (x , xs) = noc (len xz) zero (length xs) (_ ⟨ q ]= _ ∎)
-    lem0 (xz , x) (yz , y) xs ys q q' with lem0 xz yz (x , xs) (y , ys) (cong suc q) q' 
+    lem0 (xz , x) (yz , y) xs ys q q' with lem0 xz yz (x , xs) (y , ys) (cong suc q) q'
     lem0 (.yz , .y) (yz , y) .ys ys q q' | refl , refl = refl , refl
 
     lem : ∀ {X} (Δ Γ : Cx X) Ξ → Δ <>> ⟨⟩ ≃ Γ <>> Ξ → Γ <>< Ξ ≃ Δ
-    lem Δ Γ ⟨⟩ q = Γ
-                 ⟨ fst (lem0 Δ Γ ⟨⟩ ⟨⟩ refl q) ]= Δ
-                   ∎
+    lem Δ Γ ⟨⟩ q =
+      begin
+        Γ
+      ⟨ fst (lem0 Δ Γ ⟨⟩ ⟨⟩ refl q) ]=
+        Δ
+      ∎
     lem Δ Γ (x , Ξ) q = lem Δ (Γ , x) Ξ q
 
+{-
 myTest : ε ⊢ ι ▹ ι
 myTest = lambda λ x → x
 
 myTest2 : ε ⊢ (ι ▹ ι) ▹ (ι ▹ ι)
-myTest2 = lambda λ f → lambda λ x → app f (app f x) 
+myTest2 = lambda λ f → lambda λ x → app f (app f x)
+-}
 
 mutual
   data _⊨_ (Γ : Cx ⋆) : ⋆ → Set where
@@ -184,7 +195,7 @@ veq? : ∀ {Γ σ τ}(x : σ ∈ Γ)(y : τ ∈ Γ) -> Veq? x y
 veq? zero zero      = same
 veq? zero (suc y)   = diff y
 veq? (suc x) zero  = diff zero
-veq? (suc x) (suc y) with  veq? x y 
+veq? (suc x) (suc y) with  veq? x y
 veq? (suc x) (suc .x) | same = same
 veq? (suc x) (suc .(x ≠ y)) | diff y = diff (suc y)
 
@@ -230,7 +241,7 @@ try₁ : ε ⊨ ((ι ▹ ι) ▹ (ι ▹ ι)) ▹ (ι ▹ ι) ▹ (ι ▹ ι)
 try₁ = normalize (lambda id)
 
 church₂ : ∀ {τ} → ε ⊢ (τ ▹ τ) ▹ τ ▹ τ
-church₂ = lambda λ f → lambda λ x → app f (app f x) 
+church₂ = lambda λ f → lambda λ x → app f (app f x)
 
 try₂ : ε ⊨ (ι ▹ ι) ▹ (ι ▹ ι)
 try₂ = normalize (app (app church₂ church₂) church₂)
@@ -278,7 +289,7 @@ mutual
   quo ι (tt , ())
   quo ι (ff , u) = stopSp u ⟨⟩
   quo (σ ▹ τ) v = lam (quo τ (apply (renVal _ suc v) (ff , var zero)))
-  
+
 eval : ∀ {Γ Δ τ} → Γ ⊢ τ → ⟦ Γ ⟧Cx (Val Δ) → Val Δ τ
 eval (var x) γ = ⟦ x ⟧∈ γ
 eval {Γ}{_}{_} (lam t) γ = tt , λ r s → eval t (renVals Γ r γ , s)
@@ -292,6 +303,3 @@ zero : Γ ⊢ ι
 suc : Γ ⊢ ι → Γ ⊢ ι
 rec : ∀ {τ} → Γ ⊢ τ → Γ ⊢ (ι ▹ τ ▹ τ) → Γ ⊢ ι → Γ ⊢ τ
 -}
-
-
-

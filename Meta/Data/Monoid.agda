@@ -2,7 +2,6 @@ module Meta.Data.Monoid where
 
 open import Meta.Basics
 open import Meta.Control.Applicative
-open import Function using (const)
 
 record Monoid (X : Set) : Set where
   infixr 4 _•_
@@ -11,13 +10,14 @@ record Monoid (X : Set) : Set where
     _•_ : X → X → X
   monoidApplicative : Applicative λ _ → X
   monoidApplicative = record
-    { pure = const Monoid.ε
+    { pure = λ _ → ε
     ; _⍟_ = _•_
     }
 open Monoid {{...}} public
 
-sumMonoid : Monoid ℕ
-sumMonoid = record { ε = zero; _•_ = _+_ }
+instance
+  sumMonoid : Monoid ℕ
+  sumMonoid = record { ε = zero; _•_ = _+_ }
 
 record MonoidOK X {{M : Monoid X}} : Set where
   field
@@ -26,7 +26,7 @@ record MonoidOK X {{M : Monoid X}} : Set where
     assoc   : (x y z : X) → (x • y) • z ≃ x • (y • z)
 open MonoidOK {{...}} public
 
-natMonoidOK : MonoidOK ℕ {{sumMonoid}}
+natMonoidOK : MonoidOK ℕ
 natMonoidOK = record
   { absorbL = λ _ → refl
   ; absorbR = _+zero
@@ -46,14 +46,11 @@ record MonoidHom {X}{{MX : Monoid X}}{Y}{{MY : Monoid Y}} (f : X → Y) : Set wh
     resp• : ∀ x x' → f (x • x') ≃ f x • f x'
 open MonoidHom {{...}} public
 
-fstHom : ∀ {X} → MonoidHom ⟦ ListN ⟧ X {ℕ} fst
-fstHom = record { respNeut = refl; resp& = \ _ _ -> refl }
-
-monoidApplicativeHom : ∀ {X}{{MX : Monoid X}}{Y}{{MY : Monoid Y}} (f : X -> Y) {{hf : MonoidHom f}} ->
+monoidApplicativeHom : ∀ {X}{{MX : Monoid X}}{Y}{{MY : Monoid Y}} (f : X → Y) {{hf : MonoidHom f}} →
   AppHom {{monoidApplicative {{MX}}}} {{monoidApplicative {{MY}}}} f
 monoidApplicativeHom f {{hf}} = record
-  { respPure  = \ x -> MonoidHom.respε hf
-  ; respApp   = MonoidHom.resp• hf
+  { respPure  = λ x → MonoidHom.respε hf
+  ; resp-⍟   = MonoidHom.resp• hf
   }
 
 homSum : ∀ {F G}{{AF : Applicative F}}{{AG : Applicative G}} → (f : F -:> G) → Applicative λ X → F X ⊎ G X
@@ -68,14 +65,14 @@ homSum {F}{G}{{AF}}{{AG}} f = record {
     app (ff , k) (ff , g) = ff , (k ⍟ g)
 
 {-
-homSumOKP : ∀ {F G}{{AF : Applicative F}}{{AG : Applicative G}} → ApplicativeOKP F → ApplicativeOKP G → (f : F -:> G) -> AppHom f → ApplicativeOKP _ {{homSum f}}
+homSumOKP : ∀ {F G}{{AF : Applicative F}}{{AG : Applicative G}} → ApplicativeOKP F → ApplicativeOKP G → (f : F -:> G) → AppHom f → ApplicativeOKP _ {{homSum f}}
 homSumOKP {F}{G}{{AF}}{{AG}} FOK GOK f homf = record
   { lawId = lawIdLemma
   ; lawCo = lawCoLemma
   ; lawHom = {!!}
   ; lawCom = {!!}
   } where
-    lawIdLemma : {X : Set} -> (x : F X ⊎ G X) ->
+    lawIdLemma : {X : Set} → (x : F X ⊎ G X) →
                  _⍟_ {{homSum f}} (pure {{homSum f}} id) x ≃ x
     lawIdLemma (tt , u) = tt , (AF Applicative.Applicative.⍟ Applicative.Applicative.pure AF id) u
                             =[ cong (_,_ tt) (ApplicativeOKP.lawId FOK u) ⟩
@@ -101,9 +98,9 @@ homSumOKP {F}{G}{{AF}}{{AG}} FOK GOK f homf = record
         ∎
     lawCoLemma (tt , g) (tt , h) (ff , r) =
       ff , (AG Applicative.Applicative.⍟ f ((AF Applicative.Applicative.⍟ (AF Applicative.Applicative.⍟ Applicative.Applicative.pure AF comp) g) h)) r
-        =[ cong (λ q → ff , (_⍟_ {{AG}} q r)) (AppHom.respApp homf ((_⍟_ {{AF}} (pure {{AF}} (λ j k a → j (k a))) g)) h) ⟩
+        =[ cong (λ q → ff , (_⍟_ {{AG}} q r)) (AppHom.resp-⍟ homf ((_⍟_ {{AF}} (pure {{AF}} (λ j k a → j (k a))) g)) h) ⟩
       ff , (AG Applicative.Applicative.⍟ (AG Applicative.Applicative.⍟ f ((AF Applicative.Applicative.⍟ Applicative.Applicative.pure AF comp) g)) (f h)) r
-        =[ cong (λ q → ff , (AG Applicative.Applicative.⍟ (_⍟_ {{AG}} q) (f h)) r) (AppHom.respApp homf (Applicative.Applicative.pure AF comp) g) ⟩
+        =[ cong (λ q → ff , (AG Applicative.Applicative.⍟ (_⍟_ {{AG}} q) (f h)) r) (AppHom.resp-⍟ homf (Applicative.Applicative.pure AF comp) g) ⟩
       ff , (AG Applicative.Applicative.⍟ (AG Applicative.Applicative.⍟ (AG Applicative.Applicative.⍟ (f ((Applicative.Applicative.pure AF comp)))) (f g)) (f h)) r
         =[ cong (λ q → ff , (AG Applicative.Applicative.⍟ (AG Applicative.Applicative.⍟ (AG Applicative.Applicative.⍟ q) (f g)) (f h)) r) (AppHom.respPure homf (λ g h → g ∘ h) ) ⟩
       ff , (AG Applicative.Applicative.⍟ (AG Applicative.Applicative.⍟ (AG Applicative.Applicative.⍟ Applicative.Applicative.pure AG comp) (f g)) (f h)) r

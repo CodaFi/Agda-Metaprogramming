@@ -1,7 +1,7 @@
 module Meta.Data.Functor.Container.Indexed where
 
+open import Agda.Primitive
 open import Meta.Basics
-open import Level renaming (suc to lsuc)
 open import Meta.Language.LambdaCalculus
 
 record _▷_ (I J : Set) : Set₁ where
@@ -19,4 +19,3 @@ X -:> Y = ∀ i → X i → Y i
 
 ixMap : ∀ {I J}{C : I ▷ J}{X Y} → (X -:> Y) → ⟦ C ⟧ᵢ X -:> ⟦ C ⟧ᵢ Y
 ixMap f j (s , k) = s , λ p → f _ (k p)
-

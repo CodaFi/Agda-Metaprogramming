@@ -1,10 +1,10 @@
-module Apocrypha.Roman where
+module Chapter4.Apocrypha.Roman where
 
-open import Basics
-open import IndexedContainers
-open import ITree
-open import Containers
-open import W
+open import Meta.Basics
+open import Meta.Data.Functor.Container.Indexed
+open import Meta.Data.Inductive.ITree
+open import Meta.Data.Functor.Container
+open import Meta.Data.Inductive.W
 
 -- A Roman Container is a Container decorated by functions that attach input
 -- indices to positions and an output index to the shape.
@@ -20,6 +20,8 @@ record Roman (I J : Set) : Set₁ where
   -- input/output distinction and the element grabber.
   Plain : Con
   Plain = S ◃ P
+
+  --
   ⟦_⟧R : (I → Set) → (J → Set)
   ⟦_⟧R X j = Σ (Σ S λ s → q s ≃ j) (vv λ s _ → (p : P s) → X (r s p))
 Plain = Roman.Plain
@@ -63,13 +65,13 @@ RomanW : ∀ {I} → Roman I I → I → Set
 RomanW C i = Σ (W (Plain C)) λ t → phenomenology C t ≃ ideology C i t
 
 fromRomanW : ∀ {I} (C : Roman I I) {i} → RomanW C i → RomanData C i
-fromRomanW C (t , good) = {!!}
+fromRomanW C (t , good) = {! !}
 
 postulate
   extensionality : ∀ {S : Set}{T : S → Set} (f g : (s : S) → T s) → ((s : S) → f s ≃ g s) → f ≃ g
 
 toRomanW : ∀ {I} (C : Roman I I) {i} → RomanData C i → RomanW C i
-toRomanW C t = {!!}
+toRomanW C t = {! !}
 
 data _** {I : Set} (R : I × I → Set) : I × I → Set where
   ⟨⟩  : {i : I}     → (R **) (i , i)
@@ -86,7 +88,7 @@ one (fst , snd) x = x , ⟨⟩
 
 join** : ∀ {I}{R : I × I → Set} → ((R **) **) -:> (R **)
 join** (_ , _) ⟨⟩ = ⟨⟩
-join** (i , snd) (x , xs) = {!!}
+join** (i , snd) (x , xs) = {! !}
 
 Pow : Set₁ → Set₁
 Pow X = X → Set

@@ -34,7 +34,7 @@ data _⊢_ (Γ : Cx ⋆) : ⋆ → Set where
       → Γ ⊢ σ ▹ τ → Γ ⊢ σ
       -------------------
       → Γ ⊢ τ
-infix 3 _⊢_
+infix 2 _⊢_
 
 -- Decode into Agda-isms.  This looks a hell of a lot like Augustsson and
 -- Carlsson's first go at a decoder in "An exercise in dependent types: a well
@@ -69,7 +69,7 @@ Sub Γ Δ = ∀ {τ} → τ ∈ Γ → Δ ⊢ τ
 _<><_ : ∀ { X } → Cx X → List X → Cx X
 xz <>< ⟨⟩ = xz
 xz <>< (x , xs) = xz , x <>< xs
-infixl 4 _<><_
+infixl 3 _<><_
 
 -- Shiftable Simultaneous Substitutions extend both contexts with the new list
 -- of variables, then executes a Simultaneous substitution of the first into the
@@ -171,11 +171,13 @@ lambda {Γ} f = lam ((f λ {Δ Ξ}{{q}} → subst (lem Δ Γ (_ , Ξ) q) (λ Γ 
                    ∎
     lem Δ Γ (x , Ξ) q = lem Δ (Γ , x) Ξ q
 
+{-
 myTest : ε ⊢ ι ▹ ι
 myTest = lambda λ x → x
 
 myTest2 : ε ⊢ (ι ▹ ι) ▹ (ι ▹ ι)
 myTest2 = lambda λ f → lambda λ x → app f (app f x)
+-}
 
 -- "The right-nested spine representation of β-normal η-long forms.
 -- In other words, Γ ⊨ τ is a normal form in τ and Γ ⊨* τ is a spine for τ

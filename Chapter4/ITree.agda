@@ -1,9 +1,11 @@
 module Chapter4.ITree where
 
+open import Agda.Primitive
+
 open import Meta.Basics
-open import Chapter4.IndexedContainers
 open import Meta.Language.LambdaCalculus
-open import Level renaming (suc to lsuc; zero to lzero)
+
+open import Chapter4.IndexedContainers
 
 -- The universal inductive family or the fixpoint of an Indexed Container.
 data ITree {J : Set} (C : J ▷ J) (j : J) : Set where
@@ -95,7 +97,7 @@ Colx (S ◃ P $ r) (S₁ ◃ P₁ $ r₁) = (λ x → Σ (S x) λ s → (p : P x
 
 -- A richer description of the class of indexed functors.
 -- It comes as no surprise that this looks a lot like λΠω
-data Desc {l} (I : Set l) : Set (Level.suc l) where
+data Desc {l} (I : Set l) : Set (lsuc l) where
   var : I → Desc I
   σ π : (A : Set l) (D : A → Desc I) → Desc I
   _×D_ : Desc I → Desc I → Desc I

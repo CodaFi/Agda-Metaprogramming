@@ -1,14 +1,13 @@
 module Chapter1.Normal where
 
 open import Meta.Basics
-open import Function using (const)
-open import Level renaming (suc to lsuc; zero to lzero)
+open import Agda.Primitive
 
 open import Meta.Data.Fin
 open import Meta.Data.Vector
+open import Meta.Data.Monoid
 open import Meta.Control.Applicative
 open import Meta.Control.Traversable
-open import Meta.Data.Monoid
 
 -- A Normal Functor is given, up to isomorphism, by:
 record Normal : Set₁ where
@@ -97,11 +96,12 @@ unAppend zero n ys = from (⟨⟩ , ys)
 unAppend (suc m) n (x , xsys) with unAppend m n xsys
 unAppend (suc m) n (x , .(xs ++ ys)) | from (xs , ys) = from ((x , xs) , ys)
 
-listNMonoid : {X : Set} → Monoid (⟦ ListN ⟧ℕ X)
-listNMonoid = record
-  { ε = (zero , ⟨⟩)
-  ; _•_ = vv λ xn xs → vv λ yn ys → (xn + yn) , (xs ++ ys)
-  }
+instance
+  listNMonoid : {X : Set} → Monoid (⟦ ListN ⟧ℕ X)
+  listNMonoid = record
+    { ε = (zero , ⟨⟩)
+    ; _•_ = vv λ xn xs → vv λ yn ys → (xn + yn) , (xs ++ ys)
+    }
 -----------------------------------------------------------
 -----------------------------------------------------------
 
@@ -111,14 +111,13 @@ listNMonoidOK {X} = record
   ; absorbR = vv ++<>
   ; assoc = vv <+>
   } where
-    ++<> : ∀ n (xs : Vec X n) → (Monoid._•_ listNMonoid (n , xs) (ε {{listNMonoid}})) ≃ (n , xs)
+    ++<> : ∀ n (xs : Vec X n) → ((n , xs) • ε) ≃ (n , xs)
     ++<> zero ⟨⟩ = refl
     ++<> (suc n) (x , xs) = cong (vv λ m ys → suc m , (x , ys)) (++<> n xs)
 
     <+> : ∀ n (t : Vec X (size ListN n))
       (y z : ⟦ ListN ⟧ℕ X) →
-      (listNMonoid Monoid.• (listNMonoid Monoid.• n , t) y) z ≃
-      (listNMonoid Monoid.• n , t) ((listNMonoid Monoid.• y) z)
+      ((n , t) • y) • z ≃ (n , t) • (y • z)
     <+> zero ⟨⟩ _ _ = refl
     <+> (suc n) (x , xs) (i , ys) (j , zs) = subst (<+> n xs (i , ys) (j , zs))
        (vv λ m ws → _≃_ {_}{⟦ ListN ⟧ℕ X}
@@ -126,9 +125,10 @@ listNMonoidOK {X} = record
        refl
 
 -- Normal functors are traversable because Vectors are traversable.
-normalTraversable : (F : Normal) -> Traversable ⟦ F ⟧ℕ
-normalTraversable F = record
-  { traverse = \ {{aG}} f -> vv \ s xs -> pure {{aG}}  (_,_ s) ⍟ traverse {{traversableVec}} f xs }
+instance
+  normalTraversable : (F : Normal) → Traversable ⟦ F ⟧ℕ
+  normalTraversable F = record
+    { traverse = λ { {{aG}} f (sh , xs) → pure {{aG}} (_,_ sh) ⍟ traverse f xs } }
 
 
 -- "We have already seen that the identity functor VecN 1 is Normal, but can we
@@ -136,19 +136,19 @@ normalTraversable F = record
 --
 -- Yeah.  Yeah we can.
 _◦N_ : Normal → Normal → Normal
-F ◦N (ShG / szG) =  ⟦ F ⟧ℕ ShG / crush {{normalTraversable F}}{{sumMonoid}} szG
+F ◦N (ShG / szG) =  ⟦ F ⟧ℕ ShG / crush {{normalTraversable F}} szG
 
 -- The size of a traversable thing can be obtained using the Monoidness of ℕ.
 sizeT : ∀ {F}{{TF : Traversable F}}{X} → F X → ℕ
-sizeT {F}{{TF}} = crush {{TF}}{{sumMonoid}} (λ _ → 1)
+sizeT {F} = crush {F = F} (λ _ → 1)
 
 -- And hey, if you can get its size that way, you can make a Normal.
 normalT : ∀ F {{TF : Traversable F}} → Normal
-normalT F = F One / sizeT
+normalT F = F One / (sizeT {F = F})
 
 --
 shapeT : ∀ {F}{{TF : Traversable F}}{X} → F X → F One
-shapeT x = {!   !} -- traverse (λ _ → ⟨⟩)
+shapeT {F}{{TF}} = traverse (λ _ → <>)
 
 one : ∀ {X} → X → ⟦ ListN ⟧ℕ X
 one x = 1 , (x , ⟨⟩)
@@ -166,7 +166,7 @@ nMorph f (x , xs) | (s' , is) = s' , vmap (proj xs) is
 morphN : ∀ {F G} → (∀ {X} → ⟦ F ⟧ℕ X → ⟦ G ⟧ℕ X) → F ⟶N G
 morphN f s = f (s , tabulate id)
 
-
+{-
 toNormal : ∀ {F}{{TF : Traversable F}} → TraversableOKP F → ∀ {X} → F X → ⟦ normalT F ⟧ℕ X
 toNormal tokf fx = shapeT fx , subst (lengthContentsSizeShape tokf fx) (Vec _) (snd (contentsT fx))
   where
@@ -178,30 +178,19 @@ toNormal tokf fx = shapeT fx , subst (lengthContentsSizeShape tokf fx) (Vec _) (
         ⟨ TraversableOKP.lawPCo tokF {{monoidApplicative {{_}}}} {{applicativeId}} (λ _ → 1) (λ _ → <>) fx ]=
       sizeT {{_}} (shapeT fx)
         ∎
+-}
 
 _⊗_ : Normal → Normal → Normal
 (ShF / szF) ⊗ (ShG / szG) = (ShF × ShG) / λ s → szF (fst s) * szG (snd s)
 
-fromMatrix : ∀ m n {X} → Vec (Vec X n) m -> Vec X (m * n)
-fromMatrix zero n ⟨⟩ = ⟨⟩
-fromMatrix (suc m) n (v , vs) = {! v ++ (fromMatrix m n vs)  !}
-
-toMatrix : ∀ m n {X} → Vec X (m * n) → Vec (Vec X n) m
-toMatrix zero n ⟨⟩ = ⟨⟩
-toMatrix (suc m) n xs = {!   !}
-{-}
-toMatrix (suc m) n xs with split n (m * n) xs
-toMatrix (suc m) n .(ys ++ zs) | from (ys , zs) = ys , toMatrix m n zs
--}
+*-comm : (m n : ℕ) → m * n ≃ n * m
+*-comm = {!   !}
 
 swap : (F G : Normal) → (F ⊗ G) ⟶N (G ⊗ F)
-swap F G (ShF , ShG) = (ShG , ShF) ,
-  fromMatrix (size G ShG) (size F ShF)
-    (transpose
-      (toMatrix (size F ShF) (size G ShG) (tabulate id)))
+swap F G (ShF , ShG) rewrite *-comm (size F ShF) (size G ShG) = (ShG , ShF) , allFin _
 
 drop : (F G : Normal) → (F ⊗ G) ⟶N (F ◦N G)
-drop F G (ShF , ShG) = (ShF , (vec ShG)) , {!   !}
+drop F G (ShF , ShG) = (ShF , (vec ShG)) , {! k  !}
  where
   k : {n m : ℕ} -> n ≃ m -> Vec (Fin m) n
   k {n} {.n} refl = tabulate id
@@ -226,17 +215,17 @@ batchApplicative {X} = record
 batcher : ∀ {F} {{TF : Traversable F}} → F One → ∀ {X} → Batch X (F X)
 batcher {F} {{TF}} sF {X} = traverse {F} {{TF}} {Batch X} {{batchApplicative}} (λ _ → 1 , λ { (x , _) → x }) sF
 
+{-
 coherence : ∀ {F} {{TF : Traversable F}} {X} -> TraversableOKP F
             → (sF : F One) →
                fst (batcher {F} {{TF}} sF {X}) ≃
                traverse {F} {{TF}} {λ _ → ℕ} {One} {One} {{monoidApplicative {{sumMonoid}}}} (λ _ → 1) sF
 coherence {F} {{TF}} {X} tokF u = {!   !}
 
-{-
    fst (traverse TF (λ _ → 1 , unpack) u)
      ⟨ TraversableOKP.lawPHom {F} {TF} tokF {Batch X} {{ABatch}} {λ _ → ℕ} {{monoidApplicative {{sumMonoid}}}} fst (λ _ → 1 , unpack)
         (record { respPure = λ {X₁} x → refl
-                ; respApp  = λ f s → refl
+                ; resp-⍟  = λ f s → refl
                 }) u ]=
    (traverse TF {λ _ → ℕ} {One {lzero}} {X}
      {{record { pure = λ {_} _ → 0; _<*>_ = λ {_} {_} → _+_ }}}
@@ -249,13 +238,13 @@ coherence {F} {{TF}} {X} tokF u = {!   !}
      {{record { pure = λ {_} _ → 0; _<*>_ = λ {_} {_} → _+_ }}}
      (λ a → 1) u)
      ∎
--}
 
 fromNormal :  ∀ {F}{{TF : Traversable F}} -> TraversableOKP F ->
               ∀ {X} -> ⟦ normalT F ⟧ℕ X -> F X
 fromNormal {F} {{TF}} tokf {X} (sF , cF) with (coherence {F} {{TF}} {X} tokf sF)
 fromNormal {F} {{TF}} tokf {X} (sF , cF) | q with batcher {F} {{TF}} sF {X}
 fromNormal {F} {{TF}} tokf {X} (sF , cF) | q | n , csF = csF (subst (symmetry q) (λ u → Vec X u) cF)
+-}
 
 data Tree (N : Normal) : Set where
   ⟨_⟩ : ⟦ N ⟧ℕ (Tree N) → Tree N
