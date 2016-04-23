@@ -243,7 +243,7 @@ fromNormal :  ∀ {F}{{TF : Traversable F}} -> TraversableOKP F ->
               ∀ {X} -> ⟦ normalT F ⟧ℕ X -> F X
 fromNormal {F} {{TF}} tokf {X} (sF , cF) with (coherence {F} {{TF}} {X} tokf sF)
 fromNormal {F} {{TF}} tokf {X} (sF , cF) | q with batcher {F} {{TF}} sF {X}
-fromNormal {F} {{TF}} tokf {X} (sF , cF) | q | n , csF = csF (subst (symmetry q) (λ u → Vec X u) cF)
+fromNormal {F} {{TF}} tokf {X} (sF , cF) | q | n , csF = csF (subst (sym q) (λ u → Vec X u) cF)
 -}
 
 data Tree (N : Normal) : Set where

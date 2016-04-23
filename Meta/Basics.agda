@@ -101,8 +101,8 @@ infix  1 begin_
 cong : ∀ {k l}{X : Set k}{Y : Set l}(f : X -> Y){x y} → x ≃ y → f x ≃ f y
 cong f refl = refl
 
-symmetry : {X : Set} {s t : X} -> s ≃ t -> t ≃ s
-symmetry refl = refl
+sym : {X : Set} {s t : X} -> s ≃ t -> t ≃ s
+sym refl = refl
 
 data Two : Set where
   tt ff : Two
