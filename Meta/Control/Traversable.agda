@@ -8,7 +8,7 @@ open import Meta.Data.Vector
 
 record Traversable (F : Set → Set) : Set₁ where
   field
-    traverse : ∀ { G S T }{{ AG : Applicative G }} → (S → G T) -> F S → G (F T)
+    traverse : ∀ { G S T }{{ AG : Applicative G }} → (S → G T) → F S → G (F T)
 
   endofunctor : EndoFunctor F
   endofunctor = MkEndo traverse

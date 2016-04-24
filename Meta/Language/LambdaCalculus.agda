@@ -99,18 +99,18 @@ lambda : ∀ {Γ σ τ} → ((∀ {Δ Ξ} {{_ : Δ <>> ⟨⟩ ≃ Γ <>> (σ , �
 lambda {Γ} f = lam ((f λ {Δ Ξ}{{q}} → subst (lem Δ Γ (_ , Ξ) q) (λ Γ → Γ ⊢ _) (var (weak Ξ zero))))
   where
     {- This is Conor's.  He wasn't kidding about the ugly. -}
-    sucI : (a b : ℕ) -> (_≃_ {lzero}{ℕ} (suc a) (suc b)) → a ≃ b
+    sucI : (a b : ℕ) → (_≃_ {lzero}{ℕ} (suc a) (suc b)) → a ≃ b
     sucI .b b refl = refl
 
-    grr : (x y : ℕ) -> suc x + y ≃ x + suc y
+    grr : (x y : ℕ) → suc x + y ≃ x + suc y
     grr zero y = refl
     grr (suc x) y rewrite grr x y = refl
 
-    _+a_ : ℕ -> ℕ -> ℕ
+    _+a_ : ℕ → ℕ → ℕ
     zero +a y = y
     suc x +a y = x +a suc y
 
-    noc' : (x y : ℕ) -> suc (x + y) ≃ y -> {A : Set} -> A
+    noc' : (x y : ℕ) → suc (x + y) ≃ y → {A : Set} → A
     noc' x zero ()
     noc' x (suc y) q = noc' x y $′
       begin
@@ -121,11 +121,11 @@ lambda {Γ} f = lam ((f λ {Δ Ξ}{{q}} → subst (lem Δ Γ (_ , Ξ) q) (λ Γ 
         y
       ∎
 
-    noc : (x k y : ℕ) -> x +a (suc k + y) ≃ y → {A : Set} → A
+    noc : (x k y : ℕ) → x +a (suc k + y) ≃ y → {A : Set} → A
     noc zero k y q = noc' k y q
     noc (suc x) k y q = noc x (suc k) y q
 
-    len : ∀ {X} -> Cx X -> ℕ
+    len : ∀ {X} → Cx X → ℕ
     len ε = zero
     len (xz , x) = suc (len xz)
 
@@ -191,7 +191,7 @@ data Veq? {Γ σ}(x : σ ∈ Γ) : ∀ {τ} → τ ∈ Γ → Set where
 
 --Show that every |y| is discriminable with respect to a given |x|.
 
-veq? : ∀ {Γ σ τ}(x : σ ∈ Γ)(y : τ ∈ Γ) -> Veq? x y
+veq? : ∀ {Γ σ τ}(x : σ ∈ Γ)(y : τ ∈ Γ) → Veq? x y
 veq? zero zero      = same
 veq? zero (suc y)   = diff y
 veq? (suc x) zero  = diff zero
@@ -201,7 +201,7 @@ veq? (suc x) (suc .(x ≠ y)) | diff y = diff (suc y)
 
 --Show how to propagate a renaming through a normal form.
 mutual
-  renNm : ∀ {Γ Δ τ} → Ren Γ Δ -> Γ ⊨ τ → Δ ⊨ τ
+  renNm : ∀ {Γ Δ τ} → Ren Γ Δ → Γ ⊨ τ → Δ ⊨ τ
   renNm ρ (lam n) = lam (renNm (wkr ρ) n)
   renNm ρ (f $ x) = ρ f $ (renSp ρ x)
 
@@ -226,9 +226,9 @@ mutual
 infix 3 _$$_
 infix 2 ⟨_↦_⟩_
 
-η : ∀ {Γ σ}(x : σ ∈ Γ) τ → (∀ {Δ} -> Ren Γ Δ -> Δ ⊨* τ -> Δ ⊨* σ) → Γ ⊨ τ
+η : ∀ {Γ σ}(x : σ ∈ Γ) τ → (∀ {Δ} → Ren Γ Δ → Δ ⊨* τ → Δ ⊨* σ) → Γ ⊨ τ
 η x ι f = x $ f id ⟨⟩
-η x (σ ▹ τ) f = lam (η (suc x) τ λ ρ ss → f (ρ ∘ suc) ((η (ρ zero) σ (\ _ -> id)) , ss))
+η x (σ ▹ τ) f = lam (η (suc x) τ λ ρ ss → f (ρ ∘ suc) ((η (ρ zero) σ (λ _ → id)) , ss))
 
 normalize : ∀ {Γ τ} → Γ ⊢ τ → Γ ⊨ τ
 normalize (var x) = η x _ λ _ → id
@@ -270,7 +270,7 @@ mutual
 renVal : ∀ {Γ Δ} τ → Ren Γ Δ → Val Γ τ → Val Δ τ
 renVal τ r (ff , u) = ff , renSt r u
 renVal ι r (tt , ())
-renVal (σ ▹ τ) r (tt , f) = tt , (λ r' s -> f (r' ∘ r) s)
+renVal (σ ▹ τ) r (tt , f) = tt , (λ r' s → f (r' ∘ r) s)
 
 renVals : ∀ Θ {Γ Δ} → Ren Γ Δ → ⟦ Θ ⟧Cx (Val Γ) → ⟦ Θ ⟧Cx (Val Δ)
 renVals ε r _ = <>
@@ -295,7 +295,7 @@ eval (var x) γ = ⟦ x ⟧∈ γ
 eval {Γ}{_}{_} (lam t) γ = tt , λ r s → eval t (renVals Γ r γ , s)
 eval (app f s) γ = apply (eval f γ) (eval s γ)
 
-normByEval : ∀ {Γ τ} -> Γ ⊢ τ → Γ ⊨ τ
+normByEval : ∀ {Γ τ} → Γ ⊢ τ → Γ ⊨ τ
 normByEval {Γ}{τ} t = quo τ (eval t (idEnv Γ))
 
 {-

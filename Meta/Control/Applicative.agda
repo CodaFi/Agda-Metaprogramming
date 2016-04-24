@@ -55,8 +55,8 @@ applicativeComp {F} {G} f g = record
   ; _⍟_ = λ k x → (f Applicative.⍟ (f Applicative.⍟ Applicative.pure f (Applicative._⍟_ g)) k) x
   }
 
-data Product (F G : Set -> Set) (X : Set) : Set where
-  prod : F X -> G X -> Product F G X
+data Product (F G : Set → Set) (X : Set) : Set where
+  prod : F X → G X → Product F G X
 
 applicativeProd : ∀ { F G } → Applicative F → Applicative G → Applicative (Product F G)
 applicativeProd { F } { G } aF aG = record

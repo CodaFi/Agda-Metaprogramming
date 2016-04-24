@@ -38,7 +38,7 @@ vnil' = ⟨ <> , (λ ()) ⟩
 vcons' : ∀ {X n} → X → ITree (VecC X) n → ITree (VecC X) (suc n)
 vcons' x xs = ⟨ (x , (λ _ → xs)) ⟩
 
-IsArr : ⋆ -> Set
+IsArr : ⋆ → Set
 IsArr ι = Zero
 IsArr (_ ▹ _) = One
 
@@ -188,7 +188,7 @@ treeFoldInd : ∀ {I} (C : I ▷ I) P →
 treeFoldInd C P m (i , t) = treeFold (Children C) P m (i , t) (children C i t)
   where
     children : ∀ {I}(C : I ▷ I) i t → ITree (Children C) (i , t)
-    children C i ⟨ s , k ⟩ = ⟨ _ , (vv (\ _ p -> children C _ (k p))) ⟩
+    children C i ⟨ s , k ⟩ = ⟨ _ , (vv (λ _ p → children C _ (k p))) ⟩
 
 EverywhereD SomewhereD : {I : Set}(D : Desc I)(X : I → Set) → ⟦ D ⟧D X → Desc (Σ I X)
 EverywhereD (var x) X xs = var (x , xs)

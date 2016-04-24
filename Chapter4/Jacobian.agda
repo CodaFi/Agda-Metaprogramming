@@ -11,16 +11,16 @@ open import Meta.Data.Functor.Container
 -- Shapes: (i, j) derivatives
 -- Positions: the hole at index i
 -- Elements:
-Jac : ∀ {I J} -> I ▷ J -> I ▷ (J × I)
+Jac : ∀ {I J} → I ▷ J → I ▷ (J × I)
 Jac (S ◃ P $ r)
-  =  (λ { (j , i) -> Σ (S j) λ s → r j s ⁻¹ i })
+  =  (λ { (j , i) → Σ (S j) λ s → r j s ⁻¹ i })
   ◃  (λ { (j , .(r j s p)) (s , from p) → P j s ─ p })
-  $  (λ { (j , .(r j s p)) (s , from p) (p' , _) → r j s p' })
+  $  (λ { (j , .(r j s p)) (s , from p) (p' , _) → {!   !} }) -- r j s p' })
 
 plugIx : ∀ {I J} (C : I ▷ J) → ((j : J)(s : ShIx C j)(p p₁ : PoIx C j s) → Dec (p ≃ p₁)) →
          ∀ {i j X} → ⟦ Jac C ⟧ᵢ X (j , i) → X i → ⟦ C ⟧ᵢ X j
 plugIx C eq? {X = X} ((s , from p) , k) x = s , help where
-  help : (p : PoIx C _ s) -> X (riIx C _ s p)
+  help : (p : PoIx C _ s) → X (riIx C _ s p)
   help p' with eq? _ s p' p
   help .p | tt , refl = x
   help p' | ff , np = k (p' , np)

@@ -34,9 +34,11 @@ precW z s ⟨ ff , k ⟩ = s (k <>) (precW z s (k <>))
 addW : NatW → NatW → NatW
 addW x y = precW y (λ _ → sucW) x
 
+--
 _*◃_ : Con → Set → Set
 C *◃ X = W (K◃ X +◃ C)
 
+-- The f
 freeMonad : (C : Con) → Monad (_*◃_ C)
 freeMonad C = record
   { return = λ x → ⟨ (tt , x) , magic ⟩
@@ -48,9 +50,9 @@ freeMonad C = record
 
 _*◃ : Con → Con
 _*◃ C = C *◃ One ◃ Path where
-  Path : C *◃ One -> Set
+  Path : C *◃ One → Set
   Path ⟨ (tt , _) , _ ⟩ = One
-  Path ⟨ (ff , s) , k ⟩ = Σ (Po C s) \ p -> Path (k p)
+  Path ⟨ (ff , s) , k ⟩ = Σ (Po C s) λ p → Path (k p)
 
 call : ∀ {C} → (s : Sh C) → C *◃ Po C s
 call s = ⟨ (ff , s) , (λ x → ⟨ (tt , x) , magic ⟩) ⟩
@@ -61,7 +63,7 @@ call s = ⟨ (ff , s) , (λ x → ⟨ (tt , x) , magic ⟩) ⟩
 gas : ∀ {S T} → ℕ → Π⊥ S T → (s : S) → T s ⊎ One
 gas zero f s = ff , <>
 gas {S}{T} (suc n) f s = combust (f s) where
-  combust : ∀ {X} -> (S ◃ T) *◃ X → X ⊎ One
+  combust : ∀ {X} → (S ◃ T) *◃ X → X ⊎ One
   combust ⟨ (tt , s) , l ⟩ = tt , s
   combust ⟨ (ff , s) , l ⟩ with gas n f s
   combust ⟨ (ff , _) , l ⟩ | tt , t = combust (l t)

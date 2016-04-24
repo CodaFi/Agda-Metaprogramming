@@ -82,16 +82,16 @@ split zero n xs = from (⟨⟩ , xs)
 split (suc m) n (x , xs) with split m n xs
 split (suc m) n (x , .(ys ++ zs)) | from (ys , zs) = from ((x , ys) , zs)
 
-nSplit : ∀ {X}(F G : Normal)(fgx : ⟦ F ×N G ⟧ℕ X) -> nPair F G ⁻¹ fgx
+nSplit : ∀ {X}(F G : Normal)(fgx : ⟦ F ×N G ⟧ℕ X) → nPair F G ⁻¹ fgx
 nSplit F G ((f , g) , xs) with split (size F f) (size G g) xs
 nSplit F G ((f , g) , .(ys ++ zs)) | from (ys , zs) = from ((f , ys) , (g , zs))
 
-concatSurjectivity : forall {m n : ℕ} {X} -> (x : Vec X (m + n)) -> (vv \ (u : Vec X m) (v : Vec X n) -> u ++ v) ⁻¹ x
+concatSurjectivity : forall {m n : ℕ} {X} → (x : Vec X (m + n)) → (vv λ (u : Vec X m) (v : Vec X n) → u ++ v) ⁻¹ x
 concatSurjectivity {zero} v = from (⟨⟩ , v)
 concatSurjectivity {suc m} (x , v) with concatSurjectivity {m} v
 concatSurjectivity {suc m} (x , .(u ++ w)) | from (u , w) = from ((x , u) , w)
 
-unAppend : ∀ m n {X} -> (xsys : Vec X (m + n)) -> (vv _++_ {m}{n}) ⁻¹ xsys
+unAppend : ∀ m n {X} → (xsys : Vec X (m + n)) → (vv _++_ {m}{n}) ⁻¹ xsys
 unAppend zero n ys = from (⟨⟩ , ys)
 unAppend (suc m) n (x , xsys) with unAppend m n xsys
 unAppend (suc m) n (x , .(xs ++ ys)) | from (xs , ys) = from ((x , xs) , ys)
@@ -192,7 +192,7 @@ swap F G (ShF , ShG) rewrite *-comm (size F ShF) (size G ShG) = (ShG , ShF) , al
 drop : (F G : Normal) → (F ⊗ G) ⟶N (F ◦N G)
 drop F G (ShF , ShG) = (ShF , (vec ShG)) , {! k  !}
  where
-  k : {n m : ℕ} -> n ≃ m -> Vec (Fin m) n
+  k : {n m : ℕ} → n ≃ m → Vec (Fin m) n
   k {n} {.n} refl = tabulate id
 
 fstHom : ∀ {X} → MonoidHom {⟦ ListN ⟧ℕ X}{{listNMonoid}}{ℕ}{{sumMonoid}} fst
@@ -216,7 +216,7 @@ batcher : ∀ {F} {{TF : Traversable F}} → F One → ∀ {X} → Batch X (F X)
 batcher {F} {{TF}} sF {X} = traverse {F} {{TF}} {Batch X} {{batchApplicative}} (λ _ → 1 , λ { (x , _) → x }) sF
 
 {-
-coherence : ∀ {F} {{TF : Traversable F}} {X} -> TraversableOKP F
+coherence : ∀ {F} {{TF : Traversable F}} {X} → TraversableOKP F
             → (sF : F One) →
                fst (batcher {F} {{TF}} sF {X}) ≃
                traverse {F} {{TF}} {λ _ → ℕ} {One} {One} {{monoidApplicative {{sumMonoid}}}} (λ _ → 1) sF
@@ -239,8 +239,8 @@ coherence {F} {{TF}} {X} tokF u = {!   !}
      (λ a → 1) u)
      ∎
 
-fromNormal :  ∀ {F}{{TF : Traversable F}} -> TraversableOKP F ->
-              ∀ {X} -> ⟦ normalT F ⟧ℕ X -> F X
+fromNormal :  ∀ {F}{{TF : Traversable F}} → TraversableOKP F →
+              ∀ {X} → ⟦ normalT F ⟧ℕ X → F X
 fromNormal {F} {{TF}} tokf {X} (sF , cF) with (coherence {F} {{TF}} {X} tokf sF)
 fromNormal {F} {{TF}} tokf {X} (sF , cF) | q with batcher {F} {{TF}} sF {X}
 fromNormal {F} {{TF}} tokf {X} (sF , cF) | q | n , csF = csF (subst (sym q) (λ u → Vec X u) cF)

@@ -8,12 +8,12 @@ open import Meta.Data.Fin
 
 data Vec (X : Set) : ℕ → Set where
   ⟨⟩ : Vec X zero
-  _,_ : {n : ℕ} → X -> Vec X n → Vec X (suc n)
+  _,_ : {n : ℕ} → X → Vec X n → Vec X (suc n)
 
-head : ∀ {n X} → Vec X (suc n) -> X
+head : ∀ {n X} → Vec X (suc n) → X
 head (x , xs) = x
 
-tail : ∀ {n X} → Vec X (suc n) -> Vec X n
+tail : ∀ {n X} → Vec X (suc n) → Vec X n
 tail (x , xs) = xs
 
 {-
@@ -48,16 +48,16 @@ _++_ : ∀ {m n X} → Vec X m → Vec X n → Vec X (m + n)
 ⟨⟩ ++ ys = ys
 (x , xs) ++ ys = x , (xs ++ ys)
 
-vfoldl : ∀ {n S}{T : Set} → (T -> S -> T) → T -> Vec S n → T
+vfoldl : ∀ {n S}{T : Set} → (T → S → T) → T → Vec S n → T
 vfoldl f i ⟨⟩ = i
 vfoldl f i (x , xs) = vfoldl f (f i x) xs
 
-chop : forall {X} m {n} -> Vec X (m + n) -> (Vec X m) × (Vec X n)
+chop : forall {X} m {n} → Vec X (m + n) → (Vec X m) × (Vec X n)
 chop zero xs = ⟨⟩ , xs
 chop (suc m) (x , xs) with chop m xs
 ... | ys , zs = (x , ys) , zs
 
-vreplicate : ∀ {X} → (n : ℕ) -> (x : X) -> Vec X n
+vreplicate : ∀ {X} → (n : ℕ) → (x : X) → Vec X n
 vreplicate zero     x = ⟨⟩
 vreplicate (suc k) x = x , vreplicate k x
 
@@ -70,7 +70,7 @@ tabulate : ∀ {n X} → (Fin n → X) → Vec X n
 tabulate {zero} f = ⟨⟩
 tabulate {suc n} f = f zero , tabulate (λ _ → f zero)
 
-concat : ∀ {n X} → Vec (Vec X n) n -> Vec X n
+concat : ∀ {n X} → Vec (Vec X n) n → Vec X n
 concat ⟨⟩             = ⟨⟩
 concat ((x , xs) , xss) = x , concat (vmap tail xss)
 

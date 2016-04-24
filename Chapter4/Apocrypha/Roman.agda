@@ -65,7 +65,7 @@ RomanW : ∀ {I} → Roman I I → I → Set
 RomanW C i = Σ (W (Plain C)) λ t → phenomenology C t ≃ ideology C i t
 
 fromRomanW : ∀ {I} (C : Roman I I) {i} → RomanW C i → RomanData C i
-fromRomanW C (t , good) = {! !}
+fromRomanW C {i} (t , good) = {!   !}
 
 postulate
   extensionality : ∀ {S : Set}{T : S → Set} (f g : (s : S) → T s) → ((s : S) → f s ≃ g s) → f ≃ g
