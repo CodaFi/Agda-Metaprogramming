@@ -195,12 +195,14 @@ coe (Tree' I F i) (Tree' I′ F′ i′) (_ , (TREQ , IEQ)) x = tcoe i i′ TREQ
 postulate
   reflTU : (X : TU) (x : ⟦ X ⟧TU) → ⟦ Eq X x X x ⟧TU
 
-{-
+{- Exercise 6.2: Try proving this; where do you get stuck?
 reflTU : (X : TU) (x : ⟦ X ⟧TU) → ⟦ Eq X x X x ⟧TU
 reflTU X x = ?
 -}
 
 postulate
+  -- Homogeneous equations between values are made useful just by asserting that
+  -- predicates respect them. We recover the Leibniz property.
   RespTU : (X : TU) (P : ⟦ X ⟧TU → TU)
            (x x' : ⟦ X ⟧TU) → ⟦ Eq X x X x' ⟧TU → ⟦ P x ↔ P x' ⟧TU
 
@@ -208,12 +210,16 @@ substTU : (X : TU) (P : ⟦ X ⟧TU → TU)
   (x x' : ⟦ X ⟧TU) → ⟦ Eq X x X x' ⟧TU → ⟦ P x ⟧TU → ⟦ P x' ⟧TU
 substTU X P x x' q = coe (P x) (P x') (RespTU X P x x' q)
 
+-- We can express the observation that all of our proofs belong to lazy types by
+-- splitting our universe into two Sorts, corresponding to sets and
+-- propositions, embedding the latter explicitly into the former with a new
+-- set-former, Prf'.
+
 data Sort : Set where set prop : Sort
 
 IsSet : Sort → Set
 IsSet set = One
 IsSet prop = Zero
-
 
 mutual
   data PU (u : Sort) : Set where
@@ -242,6 +248,13 @@ mutual
     ) i
   ⟦ Prf' P ⟧PU = ⟦ P ⟧PU
 
+
+-- Exercise 6.3 (observational propositional equality): Reconstruct the
+-- definition of observational equality in this more refined setting. Take
+-- equality of propositions to be mutual implication and equality of proofs to
+-- be trivial: after all, equality for proofs of the atomic Zero' and One'
+-- propositions are trivial.
+
 _∧_ : PU prop → PU prop → PU prop
 P ∧ Q = Σ' P λ _ → Q
 
@@ -257,4 +270,5 @@ mutual
   PEq X x Y y = snd (PEQ X Y) x y
 
   PEQ (Prf' P) (Prf' Q) = ((P ⇒ Q) ∧ (Q ⇒ P)) , λ _ _ → One'
+  -- more code goes here
   PEQ _ _ = Zero' , λ _ _ → One'

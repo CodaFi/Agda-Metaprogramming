@@ -15,6 +15,10 @@ _∘_ : ∀ {i j k}
         (a : A) → C a (g a)
 f ∘ g = λ a → f (g a)
 
+flip : ∀ {a b c} {A : Set a} {B : Set b} {C : A → B → Set c} →
+       ((x : A) (y : B) → C x y) → ((y : B) (x : A) → C x y)
+flip f = λ y x → f x y
+
 infixr 9 _∘_
 
 _$′_ : ∀ {a b} {A : Set a} {B : A → Set b} → (∀ x → B x) → ∀ x → B x
@@ -126,6 +130,10 @@ Dec X = X ⊎ (X → Zero)
 data List (X : Set) : Set where
   ⟨⟩ : List X
   _,_ : X → List X → List X
+
+{-# BUILTIN LIST List #-}
+{-# BUILTIN NIL  ⟨⟩   #-}
+{-# BUILTIN CONS _,_  #-}
 
 length : {X : Set} → List X → ℕ
 length ⟨⟩        = zero

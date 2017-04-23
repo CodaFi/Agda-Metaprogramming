@@ -64,19 +64,18 @@ mutual
 -- the ? with a condition which ensures that FreshLists have distinct elements.
 -- Try to make sure that, for any concrete FreshList, ok can be inferred
 -- trivially.
-
 module FRESHLIST (X : Set) (Xeq? : (x x₁ : X) → Dec (x ≃ x₁)) where
   mutual
     data FreshList : Set where
       [] : FreshList
-      _,_ : (x : X)(xs : FreshList) {ok : Fresh x xs} → FreshList
+      _,_ : (x : X)(xs : FreshList) {ok : x ∉ xs} → FreshList
 
     -- The distinctness (freshness) guarantee says that.
-    Fresh : X → FreshList → Set
-    Fresh x [] = One -- There's nothing to do with an x and the empty list.
-    Fresh x (x₁ , xs) with Xeq? x x₁ -- Otherwise destruct a decidable eq on head.
-    Fresh x (x₁ , xs) | tt , _ = Zero -- We have a match!  It isn't fresh.
-    Fresh x (x₁ , xs) | ff , _ = Fresh x xs -- Otherwise try again.
+    _∉_ : X → FreshList → Set
+    x ∉ [] = One -- There's nothing to do with an x and the empty list.
+    x ∉ (x₁ , xs) with Xeq? x x₁ -- Otherwise destruct a decidable eq on head.
+    x ∉ (x₁ , xs) | tt , _ = Zero -- We have a match!  It isn't fresh.
+    x ∉ (x₁ , xs) | ff , _ = x ∉ xs -- Otherwise try again.
 
 -- "Randy Pollack identified the task of modelling record types as a key early
 -- use of induction-recursion , motivated to organise libraries for mathematical
@@ -371,11 +370,16 @@ mutual
   DeDS D (σ S T) (s , t) = DeDS D (T s) t
   DeDS D (δ H T) (hd , t) = DeDS D (T (λ h → ⟦ hd h ⟧ds)) t
 
+
+-- Exercise 5.12 (bindDS and its meaning): Implement the appropriate bindDS
+-- operator, corresponding to substitution at ◆.
 bindDS : ∀ {I J K} → DS I J → (J → DS I K) → DS I K
 bindDS (ι x) U = U x
 bindDS (σ S T) U = σ S (λ s → bindDS (T s) U)
 bindDS (δ H T) U = δ H (λ f → bindDS (T f) U)
 
+-- Show that bindDS corresponds to a kind of Σ by implementing pairing and
+-- projections:
 pairDS : ∀ {I J K} (T : DS I J) (U : J → DS I K) {X : Fam I} →
            (t : fst (⟦ T ⟧DS X)) (u : fst (⟦ U (snd (⟦ T ⟧DS X) t) ⟧DS X))
            → fst (⟦ bindDS T U ⟧DS X)
@@ -389,6 +393,9 @@ coDS E D = {!!}
 -}
 
 mutual
+  -- An Indutive-Recursive definition of Indutive-Recursive things that have
+  -- 'I'nformation in them.  It is an open problem as to whether this actually
+  -- encodes IR, so for now it is just IR-ish.
   data Irish (I : Set₁) : Set₁ where
     ι : Irish I
     κ : Set → Irish I
@@ -401,18 +408,24 @@ mutual
   Info (π S T) = (s : S) → Info (T s)
   Info (σ S T) = Σ (Info S) λ s → Info (T s)
 
+-- To interpret π and σ, we shall need to equip Fam with pointwise lifting and
+-- dependent pairs, respectively.
 ΠF : (S : Set) {J : S → Set₁} (T : (s : S) → Fam (J s)) → Fam ((s : S) → J s)
 ΠF S T = ((s : S) → fst (T s)) , (λ f s → snd (T s) (f s))
 
 ΣF : {I : Set₁} (S : Fam I) {J : I → Set₁} (T : (i : I) → Fam (J i)) → Fam (Σ I J)
 ΣF S T = (Σ (fst S) (fst ∘ (T ∘ snd S))) , (λ { (s , t) → snd S s , snd (T (snd S s)) t })
 
+-- Now, for any T : Irish I, if someone gives us a Fam I to represent children,
+-- we can compute a Fam (Info T) — a small node structure from which the large
+-- Info T can be extracted.
 Node : ∀ {I} (T : Irish I) → Fam I → Fam (Info T)
 Node ι X = X
 Node (κ A) X = A , ↑
 Node (π S T) X = ΠF S λ s → Node (T s) X
 Node (σ S T) X = ΣF (Node S X) λ iS → Node (T iS) X
 
+-- A functor from Fam I to Fam J is then given by a pair
 IF : Set₁ → Set₁ → Set₁
 IF I J = Σ (Irish I) λ T → Info T → J
 
@@ -423,6 +436,9 @@ f $F (F , i) = F , (f ∘ i)
 ⟦ (T , d) ⟧IF X = d $F Node T X
 
 {-
+-- With a certain tedious inevitability, we find that Agda rejects the obvious
+-- attempt to tie the knot.
+
 mutual
   data DataIF {I} (F : IF I I) : Set where
     ⟨_⟩ : fst (⟦ F ⟧IF (DataIF F , ⟦_⟧if)) → DataIF F
@@ -431,6 +447,7 @@ mutual
 -}
 
 mutual
+  -- Again, specialization of Node fixes the problem
   data DataIF {I} (F : IF I I) : Set where
     ⟨_⟩ : NoIF F (fst F) → DataIF F
 
@@ -449,14 +466,19 @@ mutual
   DelF F (π S T) f = λ s → DelF F (T s) (f s)
   DelF F (σ S T) (s , t) = let s′ = DelF F S s in s′ , DelF F (T s′) t
 
+-- Exercise 5.15 (Irish-to-Swedish): Show how to define this, such that
+-- such that ⟦ DSIF T ⟧DS ≅ ⟦ T ⟧IF
 DSIF : ∀ {I J} → DS I J → IF I J
 DSIF (ι x) = κ One , (λ _ → x)
 DSIF (σ S T) = (σ (κ S) (λ s → fst (DSIF (T (↓ s))))) , (λ { (s , t) → snd (DSIF (T (↓ s))) t })
 DSIF (δ H T) = (σ (π H λ _ → ι) (λ f → fst (DSIF (T f)))) , (λ { (f , t) → snd (DSIF (T f)) t })
 
+-- We clearly have identity for the Irish IR.
 idIF : ∀ {I} → IF I I
 idIF = ι , id
 
+-- Exercise 5.16 (subIF): Construct a substitution operator for Irish J with a
+-- refinement of the following type.
 subIF : ∀ {I J} (T : Irish J) (F : IF I J) → IF I (Info T)
 subIF ι F = F
 subIF (κ A) F = κ A , (λ z → ↑ (↓ z))
@@ -464,6 +486,11 @@ subIF (π S T) F = (π S λ s → fst (subIF (T s) F)) , (λ f s → snd (subIF 
 subIF (σ S T) F with subIF S F
 ... | (SF , f) = (σ SF λ sf → fst (subIF (T (f sf)) F)) , (λ { (sf , tf) → f sf , snd (subIF (T (f sf)) F) tf })
 
+-- Exercise 5.17 (coIF): Now define composition for Irish IR functors.
 colF : ∀ {I J K} → IF J K → IF I J → IF I K
 colF (S , x) F with subIF S F
 ... | TF , f = TF , (x ∘ f)
+
+-- "Some of us are inclined to suspect that IF does admit more functors than DS,
+-- but the exact status of Irish induction-recursion remains the stuff of future
+-- work."

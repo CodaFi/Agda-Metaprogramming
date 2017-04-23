@@ -15,7 +15,7 @@ Jac : ∀ {I J} → I ▷ J → I ▷ (J × I)
 Jac (S ◃ P $ r)
   =  (λ { (j , i) → Σ (S j) λ s → r j s ⁻¹ i })
   ◃  (λ { (j , .(r j s p)) (s , from p) → P j s ─ p })
-  $  (λ { (j , .(r j s p)) (s , from p) (p' , _) → {!   !} }) -- r j s p' })
+  $  (λ { (j , .(r j s p)) (s , from p) (p' , _) → r j s p' })
 
 plugIx : ∀ {I J} (C : I ▷ J) → ((j : J)(s : ShIx C j)(p p₁ : PoIx C j s) → Dec (p ≃ p₁)) →
          ∀ {i j X} → ⟦ Jac C ⟧ᵢ X (j , i) → X i → ⟦ C ⟧ᵢ X j
@@ -44,8 +44,14 @@ zipOut C eq? ⟨ (ff , (_ , c)) , cz ⟩ t = zipOut C eq? (cz <>) ⟨ plugIx C e
 -- 4.13 (differentiating Desc) The notion corresponding to Jac for descriptions
 -- is ▽, computing a 'vector' of partial derivatives.  Define it symbolically.
 ▽ : {I : Set} → Desc I → I → Desc I
-▽ (var x) h = κ (x ≃ h) -- ▽ X is a constant (⊤)
-▽ (σ A D) h = σ A λ a → ▽ (D a) h -- ▽ (A + D) is a vector of derivatives indexed by A.
-▽ (π A D) h = σ A λ a → ▽ (D a) h ×D π (A ─ a) λ { (a₁ , _) → D a₁ } -- ▽ (A × D) is a matrix of derivatives yielding column vectors indexed by A
-▽ (D ×D E) h = σ Two ((▽ D h ×D E) ⟨?⟩ (D ×D ▽ E h)) -- The product rule
-▽ (κ x) h = κ Zero -- The derivative of a constant is 0
+-- The derivative of a constant is 0
+▽ (κ x) h = κ Zero
+-- ▽ X is a constant (⊤)
+▽ (var x) h = κ (x ≃ h)
+-- ▽ (Σ (a : A) (D a)) is the partial derivative of D projected from A.
+▽ (σ A D) h = σ A λ a → ▽ (D a) h
+-- ▽ ((a : A) → D) is the partial deriative of D projected from A and an arrow
+-- computing further derivatives of values distinct from a.
+▽ (π A D) h = σ A λ a → ▽ (D a) h ×D π (A ─ a) λ { (a₁ , _) → D a₁ }
+-- The product rule
+▽ (D ×D E) h = σ Two ((▽ D h ×D E) ⟨?⟩ (D ×D ▽ E h))

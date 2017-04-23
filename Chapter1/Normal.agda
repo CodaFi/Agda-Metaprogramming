@@ -183,8 +183,8 @@ toNormal tokf fx = shapeT fx , subst (lengthContentsSizeShape tokf fx) (Vec _) (
 _⊗_ : Normal → Normal → Normal
 (ShF / szF) ⊗ (ShG / szG) = (ShF × ShG) / λ s → szF (fst s) * szG (snd s)
 
-*-comm : (m n : ℕ) → m * n ≃ n * m
-*-comm = {!   !}
+*-comm : ∀ m n → m * n ≃ n * m
+*-comm m n = {!   !}
 
 swap : (F G : Normal) → (F ⊗ G) ⟶N (G ⊗ F)
 swap F G (ShF , ShG) rewrite *-comm (size F ShF) (size G ShG) = (ShG , ShF) , allFin _
@@ -279,4 +279,4 @@ induction N P p ⟨ s , ts ⟩ = p s ts (hyps ts) where
 
 eq? : (N : Normal)(sheq? : (s s` : Shape N) → Dec (s ≃ s`)) →
       (t t` : Tree N) → Dec (t ≃ t`)
-eq? N sheq? t t' = tt , {!   !}
+eq? N sheq? t t' = {!   !}

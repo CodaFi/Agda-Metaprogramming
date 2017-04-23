@@ -21,17 +21,20 @@ instance
   traversableId : Traversable id
   traversableId = record { traverse = id }
 
-  traversableVec : forall {n} → Traversable (λ X → Vec X n)
-  traversableVec = record { traverse = vtr } where
-    vtr : forall {n G S T} {{_ : Applicative G}} → (S → G T) → Vec S n → G (Vec T n)
-    vtr {{aG}} f ⟨⟩ = pure ⟨⟩
-    vtr {{aG}} f (x , xs) = pure {{aG}} _,_ ⍟ f x ⍟ vtr f xs
+  traversableVec : ∀ {n} → Traversable (flip Vec n)
+  traversableVec = record { traverse = vtr }
+    where
+      vtr : ∀ {A : Set}{n B F}⦃ _ : Applicative F ⦄ → (A → F B) → Vec A n → F (Vec B n)
+      vtr ⦃ aF ⦄ f ⟨⟩ = pure ⦃ aF ⦄ ⟨⟩
+      vtr ⦃ aF ⦄ f (a , as) = pure ⦃ aF ⦄ _,_ ⍟ f a ⍟ vtr ⦃ aF ⦄ f as
 
 traversableComp : ∀ { F G } → Traversable F → Traversable G → Traversable (F ∘ G)
 traversableComp {F} {G} f g = record { traverse = traverse {{f}} ∘ traverse {{g}} }
 
-transpose : ∀ {m n X} → Vec (Vec X n) m → Vec (Vec X m) n
-transpose = traverse id
+{-
+transpose : ∀ {m n}{X : Set} → Vec (Vec X n) m → Vec (Vec X m) n
+transpose = Traversable.traverse id
+-}
 
 {-
 record TraversableOKP F {{TF : Traversable F}} : Set₁ where
