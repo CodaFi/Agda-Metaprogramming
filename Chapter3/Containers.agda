@@ -3,7 +3,7 @@ module Chapter3.Containers where
 open import Meta.Basics
 open import Meta.Data.EndoFunctor
 
--- "Containers are infinitary generatlization of normal functors" by
+-- "Containers are infinitary generalization of normal functors" by
 record Con : Set₁ where
   constructor _◃_
   field
