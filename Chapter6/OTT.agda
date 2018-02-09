@@ -178,7 +178,7 @@ coe (Tree' I F i) (Tree' I′ F′ i′) (_ , (TREQ , IEQ)) x = tcoe i i′ TREQ
 
 -- "If you look at the definition of EQ quite carefully, you will notice that we
 -- did not use all of the types in TU to express equations. There is never any
--- choice about how to be equal, so we need never use Two0; meanwhile, we can
+-- choice about how to be equal, so we need never use Two; meanwhile, we can
 -- avoid expressing tree equality as itself a tree just by using structural
 -- recursion. As a result, the only constructor pattern matching coe need ever
 -- perform on proofs is on pairs, which is just sugar for the lazy use of

@@ -17,9 +17,9 @@ open import Meta.Language.LambdaCalculus
 record _▷_ (I J : Set) : Set₁ where
   constructor _◃_$_
   field
-    ShIx : J → Set -- A J-indexed thing
-    PoIx : (j : J) → ShIx j → Set -- that determines places for
-    riIx : (j : J) (s : ShIx j) (p : PoIx j s) → I -- I elements
+    ShIx : J → Set -- A J-indexed family of operations
+    PoIx : (j : J) → ShIx j → Set -- for each of these, a family of arities
+    riIx : (j : J) (s : ShIx j) (p : PoIx j s) → I -- and a typing discipline, matching sorts to arities.
   ⟦_⟧ᵢ : (I → Set) → (J → Set)
   ⟦_⟧ᵢ X j = Σ (ShIx j) λ s → (p : PoIx j s) → X (riIx j s p)
 open _▷_ public

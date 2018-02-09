@@ -8,24 +8,38 @@ open import Meta.Language.LambdaCalculus
 open import Chapter4.IndexedContainers
 
 -- The universal inductive family or the fixpoint of an Indexed Container.
+--
+-- To encode data type definitions, the non-recursive constructors are the
+-- shapes, the recursive constructors are the positions, and the indexing
+-- structure is the typing discipline.
 data ITree {J : Set} (C : J ▷ J) (j : J) : Set where
   ⟨_⟩ : ⟦ C ⟧ᵢ (ITree C) j → ITree C j
 
+-- Natural numbers are usually given as
 --
+-- data 𝕟 : Set where
+--   zero : 𝕟
+--   suc : (n : 𝕟) → 𝕟
+--
+-- Let's derive a signature:
 NatC : One ▷ One
-NatC = (λ _ → Two) ◃ (λ _ → Zero ⟨?⟩ One) $ _
+NatC = (λ _ → Two) -- We have two constructors, z, and s.
+      ◃ (λ _ → Zero ⟨?⟩ One) -- At position 0 we have no arguments, at s we recur with the predecessor.
+      $ _ -- A trivial indexing structure yields a trivial typing (⊤)
 
+-- We can inhabit this signature with a bit of magic.
 zeroC : ITree NatC <>
 zeroC = ⟨ tt , magic ⟩
 
 sucC : ITree NatC <> → ITree NatC <>
 sucC n = ⟨ ff , (λ _ → n) ⟩
 
+-- The indexing structure of a dependent vector is given below:
 VecC : Set → ℕ ▷ ℕ
 VecC X = VS ◃ VP $ Vr where -- depending on the length
   VS : ℕ → Set
-  VS zero = One -- nil is unlabelled
-  VS (suc n) = X -- cons carried an element
+  VS zero = One -- at sort 0, there is a single operation: nil
+  VS (suc n) = X -- cons carries an element
 
   VP : (n : ℕ) → VS n → Set
   VP zero _ = Zero -- nil has no children
@@ -35,6 +49,7 @@ VecC X = VS ◃ VP $ Vr where -- depending on the length
   Vr zero <> () -- nil has no children to index
   Vr (suc n) x <> = n -- the tail of a cons has the length one less
 
+-- Once again, we inhabit the signature with sorcery.
 vnil' : ∀ {X} → ITree (VecC X) 0
 vnil' = ⟨ <> , (λ ()) ⟩
 
@@ -193,9 +208,9 @@ DescD {l} I _ = Σ Desc⋆ (λ
   })
 -}
 
+--
 -- Predicate Transformers
--------------------------
-
+--
 
 Everywhere : ∀ {I J} (C : I ▷ J)(X : I → Set) → Σ I X ▷ Σ J (⟦ C ⟧ᵢ X)
 Everywhere (S ◃ P $ r) X

@@ -188,10 +188,10 @@ swap : (F G : Normal) → (F ⊗ G) ⟶N (G ⊗ F)
 swap F G (ShF , ShG) rewrite *-comm (size F ShF) (size G ShG) = (ShG , ShF) , allFin _
 
 drop : (F G : Normal) → (F ⊗ G) ⟶N (F ◦N G)
-drop F G (ShF , ShG) = (ShF , (vec ShG)) , {! k  !}
- where
-  k : {n m : ℕ} → n ≃ m → Vec (Fin m) n
-  k {n} {.n} refl = tabulate id
+drop F G (ShF , ShG) = (ShF , pure ShG) , subst (lemma (size F ShF)) (Vec _) (tabulate id) where
+  lemma : ∀ n → (n * size G ShG) ≃ (crush (size G) (vec {n} ShG))
+  lemma zero = refl
+  lemma (suc n) rewrite lemma n = refl
 
 fstHom : ∀ {X} → MonoidHom {⟦ ListN ⟧ℕ X}{{listNMonoid}}{ℕ}{{sumMonoid}} fst
 fstHom = record
@@ -277,4 +277,10 @@ induction N P p ⟨ s , ts ⟩ = p s ts (hyps ts) where
 
 eq? : (N : Normal)(sheq? : (s s` : Shape N) → Dec (s ≃ s`)) →
       (t t` : Tree N) → Dec (t ≃ t`)
-eq? N sheq? t t' = {!   !}
+eq? N sheq? ⟨ vt , vts ⟩ ⟨ vt' , vts' ⟩ with sheq? vt vt'
+eq? N sheq? ⟨ vt , vts ⟩ ⟨ vt' , vts' ⟩ | tt , refl = {!   !}
+eq? N sheq? ⟨ vt , vts ⟩ ⟨ vt' , vts' ⟩ | ff , falsum = ff , falsum ∘ lemma where
+  lemma : ∀ {s s' : Shape N} →
+            {vts : Vec (Tree N) (size N s)}{vts' : Vec (Tree N) (size N s')} →
+            ⟨ s , vts ⟩ ≃ ⟨ s' , vts' ⟩ → s ≃ s'
+  lemma refl = refl
