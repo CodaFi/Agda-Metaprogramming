@@ -4,6 +4,7 @@ open import Meta.Basics
 open import Agda.Primitive
 
 open import Meta.Data.Fin
+open import Meta.Data.Nat
 open import Meta.Data.Vector
 open import Meta.Data.Monoid
 open import Meta.Control.Applicative
@@ -182,9 +183,6 @@ toNormal tokf fx = shapeT fx , subst (lengthContentsSizeShape tokf fx) (Vec _) (
 
 _⊗_ : Normal → Normal → Normal
 (ShF / szF) ⊗ (ShG / szG) = (ShF × ShG) / λ s → szF (fst s) * szG (snd s)
-
-*-comm : ∀ m n → m * n ≃ n * m
-*-comm m n = {!   !}
 
 swap : (F G : Normal) → (F ⊗ G) ⟶N (G ⊗ F)
 swap F G (ShF , ShG) rewrite *-comm (size F ShF) (size G ShG) = (ShG , ShF) , allFin _

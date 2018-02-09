@@ -32,7 +32,7 @@ A ∋ x = x
 infixl 0 _∋_
 
 data ℕ : Set where
-  zero  :      ℕ
+  zero  :     ℕ
   suc   : ℕ → ℕ
 
 {-# BUILTIN NATURAL ℕ #-}
@@ -44,7 +44,7 @@ infixr 6 _+_
 
 _*_ : ℕ → ℕ → ℕ
 zero * y = zero
-suc x * y = x * y + y
+suc x * y = y + x * y
 infixr 7 _*_
 
 _^_ : ℕ → ℕ → ℕ
@@ -77,7 +77,6 @@ data _≃_ {l}{X : Set l}(x : X) : X → Set l where
   refl : x ≃ x
 infix 1 _≃_
 {-# BUILTIN EQUALITY _≃_ #-}
-{-# BUILTIN REFL refl #-}
 
 subst : ∀ {k l}{X : Set k}{s t : X} → s ≃ t → (P : X → Set l) → P s → P t
 subst refl P p = p
@@ -107,6 +106,9 @@ cong f refl = refl
 
 sym : {X : Set} {s t : X} → s ≃ t → t ≃ s
 sym refl = refl
+
+trans : {X : Set} {r s t : X} → r ≃ s → s ≃ t → r ≃ t
+trans refl refl = refl
 
 data Two : Set where
   tt ff : Two
@@ -143,6 +145,7 @@ zip : {S T : Set} → List S → List T → List (S × T)
 zip ⟨⟩ ⟨⟩ = ⟨⟩
 zip (x , xs) (y , ys) = (x , y) , zip xs ys
 zip _ _ = ⟨⟩
+
 
 data _⁻¹_ { S T : Set }(f : S → T) : T → Set where
   from : (s : S) → f ⁻¹ f s
