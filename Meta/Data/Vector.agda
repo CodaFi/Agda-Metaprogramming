@@ -16,26 +16,30 @@ head (x , xs) = x
 tail : ∀ {n X} → Vec X (suc n) → Vec X n
 tail (x , xs) = xs
 
-{-
-zip : forall {n S T} → Vec S n → Vec T n → Vec (S × T) n
-zip ⟨⟩ ⟨⟩ = ⟨⟩
-zip (x , xs) (y , ys) = (x , y) , zip xs ys
--}
+zipv : ∀ {n S T} → Vec S n → Vec T n → Vec (S × T) n
+zipv ⟨⟩ ⟨⟩ = ⟨⟩
+zipv (x , xs) (y , ys) = (x , y) , zipv xs ys
 
-vec : forall {n X} → X → Vec X n
+vec : ∀ {n X} → X → Vec X n
 vec {zero} x = ⟨⟩
-vec {suc n} x = x , vec x
+vec {suc n} x = x , (vec x)
 
 vapp : ∀ {n S T} → Vec (S → T) n → Vec S n → Vec T n
 vapp ⟨⟩ ⟨⟩ = ⟨⟩
-vapp (x , fs) (x₁ , ss) = x x₁ , vapp fs ss
+vapp (f , fs) (x , xs) = (f x) , vapp fs xs
+
+proj : ∀ {n X} → Vec X n → Fin n → X
+proj ⟨⟩ ()
+proj (x , xs) zero = x
+proj (x , xs) (suc i) = proj xs i
 
 vmap : ∀ {n S T} → (S → T) → Vec S n → Vec T n
-vmap f xs = vapp (vec f) xs
-{-
 vmap f ⟨⟩ = ⟨⟩
-vmap f (x , xs) = f x , vmap f xs
--}
+vmap f (x , xs) = (f x) , vmap f xs
+
+concat : ∀ {n X} → Vec (Vec X n) n → Vec X n
+concat ⟨⟩ = ⟨⟩
+concat ((x , xx) , xxs) = x , concat (vmap tail xxs)
 
 zipV : ∀ {n S T} → Vec S n → Vec T n → Vec (S × T) n
 zipV ss ts = vapp (vapp (vec _,_) ss) ts
@@ -61,18 +65,9 @@ vreplicate : ∀ {X} → (n : ℕ) → (x : X) → Vec X n
 vreplicate zero     x = ⟨⟩
 vreplicate (suc k) x = x , vreplicate k x
 
-proj : ∀ {n X} → Vec X n → Fin n → X
-proj ⟨⟩ ()
-proj (x , xs) zero = x
-proj (x , xs) (suc i) = proj xs i
-
 tabulate : ∀ {n X} → (Fin n → X) → Vec X n
 tabulate {zero} f = ⟨⟩
 tabulate {suc n} f = f zero , tabulate (λ _ → f zero)
-
-concat : ∀ {n X} → Vec (Vec X n) n → Vec X n
-concat ⟨⟩             = ⟨⟩
-concat ((x , xs) , xss) = x , concat (vmap tail xss)
 
 instance
   monadVec : ∀ {n} → Monad λ X → Vec X n
@@ -87,7 +82,7 @@ instance
   vecEndoFunctorOKP : ∀ {n} → EndoFunctorOKP (λ X → Vec X n)
   vecEndoFunctorOKP = record { endoFunctorId = vecId; endoFunctorCo = λ f g → vecComp f g }
     where
-      vecId : ∀ {n X} → (x : Vec X n) → vapp (vec id) x ≃ x
+      vecId : ∀ {n X} → (x : Vec X n) → vmap id x ≃ x
       vecId ⟨⟩ = refl
       vecId (x , xs) rewrite vecId xs = refl
 

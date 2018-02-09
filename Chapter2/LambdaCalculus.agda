@@ -124,7 +124,7 @@ _<>>_ : ∀ {X} → Cx X → List X → List X
 ε <>> ys = ys
 (xz , x) <>> ys = xz <>> (x , ys)
 
-open import Level renaming (zero to lzero; suc to lsuc)
+open import Agda.Primitive
 
 lambda : ∀ {Γ σ τ} → ((∀ {Δ Ξ} {{_ : Δ <>> ⟨⟩ ≃ Γ <>> (σ , Ξ)}} → Δ ⊢ σ) → Γ , σ ⊢ τ) → Γ ⊢ σ ▹ τ
 lambda {Γ} f = lam ((f λ {Δ Ξ}{{q}} → subst (lem Δ Γ (_ , Ξ) q) (λ Γ → Γ ⊢ _) (var (weak Ξ zero))))

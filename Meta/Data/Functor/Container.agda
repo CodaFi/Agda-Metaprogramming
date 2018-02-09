@@ -23,7 +23,7 @@ _+◃_ : Con → Con → Con
 (S ◃ P) +◃ (S₁ ◃ P₁) = (S ⊎ S₁) ◃ vv P ⟨?⟩ P₁
 
 _×◃_ : Con → Con → Con
-(S ◃ P) ×◃ (S₁ ◃ P₁) = (S × S₁) ◃ vv λ s s₁ → P s ⊎ P₁ s₁ 
+(S ◃ P) ×◃ (S₁ ◃ P₁) = (S × S₁) ◃ vv λ s s₁ → P s ⊎ P₁ s₁
 
 Σ◃ : (A : Set)(C : A → Con) → Con
 Σ◃ A C = (Σ A λ a → Sh (C a)) ◃ vv λ a s → Po (C a) s
@@ -47,7 +47,7 @@ _⟶◃_ : Con → Con → Set
 (S ◃ P) ⟶◃ (S₁ ◃ P₁) = Σ (S → S₁) λ f → (s : S) → P₁ (f s) → P s
 
 _/◃_ : ∀ {C C₁} → C ⟶◃ C₁ → ∀ {X} → ⟦ C ⟧◃ X → ⟦ C₁ ⟧◃ X
-(to , fro) /◃ (s , k) = to s , k ∘ fro s 
+(to , fro) /◃ (s , k) = to s , k ∘ fro s
 
 morph◃ : ∀ {C C₁} → (∀ {X} → ⟦ C ⟧◃ X → ⟦ C₁ ⟧◃ X) → C ⟶◃ C₁
 morph◃ f = (λ x → fst (f (x , id))) , (λ s → snd (f (s , id)))
@@ -57,5 +57,3 @@ id⟶◃ = id , (λ _ x → x)
 
 _∘⟶◃_ : ∀ {C D E} → (D ⟶◃ E) → (C ⟶◃ D) → (C ⟶◃ E)
 (toe , froe) ∘⟶◃ (tod , frod) = toe ∘ tod , (λ s z → frod s (froe (tod s) z))
-
-

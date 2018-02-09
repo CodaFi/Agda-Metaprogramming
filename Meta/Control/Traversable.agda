@@ -15,7 +15,8 @@ record Traversable (F : Set → Set) : Set₁ where
 open Traversable {{...}} public
 
 crush : ∀ { F X Y }{{ TF : Traversable F }}{{ M : Monoid Y }} → (X → Y) → F X → Y
-crush {{ M = M }} = traverse { T = One }{{ AG = monoidApplicative {{ M }} }}
+crush {{ M = M }} = traverse { T = One }{{ AG = Meta.Data.Monoid.monoidApplicative {{ M }} }} where
+  open Monoid M
 
 instance
   traversableId : Traversable id
