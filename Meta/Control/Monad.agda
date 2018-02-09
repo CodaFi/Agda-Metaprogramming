@@ -1,6 +1,7 @@
 module Meta.Control.Monad where
 
 open import Meta.Basics
+open import Meta.Data.EndoFunctor
 open import Meta.Control.Applicative
 
 record Monad (F : Set → Set) : Set₁ where
@@ -12,6 +13,11 @@ record Monad (F : Set → Set) : Set₁ where
     { pure = return
     ; _⍟_ =  λ ff fs → ff >>= λ f → fs >>= λ s → return (f s)
     }
+  monadEndoFunctor : EndoFunctor F
+  monadEndoFunctor = Applicative.applicativeEndoFunctor monadApplicative
+
+  μᴹ : ∀ {X} → F (F X) → F X
+  μᴹ x = x >>= id
 open Monad {{...}} public
 
 {-
